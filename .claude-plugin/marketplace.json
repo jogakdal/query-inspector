@@ -1,0 +1,24 @@
+{
+  "name": "query-inspector-marketplace",
+  "owner": {
+    "name": "Yongho Hwang(황용호)",
+    "email": "jogakdal@gmail.com"
+  },
+  "description": "Marketplace for the query-inspector Claude Code plugin.",
+  "version": "1.0.0",
+  "plugins": [
+    {
+      "name": "query-inspector",
+      "displayName": "Query Inspector",
+      "source": "./",
+      "description": "Inspects SQL and ORM-generated queries in your changes — tuning-report (missing indexes, N+1s, anti-patterns) and inventory-report (query catalog).",
+      "version": "1.0.0",
+      "author": {
+        "name": "Yongho Hwang(황용호)",
+        "email": "jogakdal@gmail.com"
+      },
+      "keywords": ["tuning", "sql", "orm", "jpa", "mybatis", "index", "n+1", "performance"],
+      "category": "productivity"
+    }
+  ]
+}

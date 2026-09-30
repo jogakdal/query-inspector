@@ -1,0 +1,33 @@
+# 골든 기대 — examples/sample-project (mybatis + native-sql + migration)
+# query-inspector를 이 fixture에 돌렸을 때 리포트가 만족해야 할 최소 기준.
+# 라인 번호는 리팩터링에 취약하므로 파일 단위로만 고정한다.
+fixture: examples/sample-project
+depth: schema                     # Tier2 (마이그레이션 DDL 존재)
+dialect:
+  expect: mysql
+  evidence: "build.gradle (mysql-connector-j)"
+  schema_coverage: SCHEMA-CONFIRMED
+
+# 반드시 검출되어야 할 이슈(누락 시 회귀)
+must_detect:
+  - { id: missing_index,          at: OrderMapper.xml,    note: "orders(user_id) FK 인덱스 없음" }
+  - { id: missing_index,          at: OrderMapper.xml,    note: "orders(status, created_at) 복합 없음" }
+  - { id: n_plus_one,             at: UserMapper.xml,     note: "<collection select=...> 중첩 select" }
+  - { id: dialect_pipe_concat,    at: UserRepository.kt,  note: "MySQL에서 || 는 OR" }
+  - { id: leading_wildcard_like,  at: UserRepository.kt,  note: "LIKE '%..%'" }
+  - { id: select_star,            at: UserMapper.xml }
+  - { id: unbounded_result,       at: UserMapper.xml,     note: "ids==null → 전체 조회" }
+  - { id: large_in_clause,        at: UserMapper.xml,     note: "<foreach> IN" }
+
+# 반드시 제안되어야 할 인덱스(컬럼 집합, 순서 포함)
+must_suggest_index:
+  - "orders (user_id)"
+  - "orders (status, created_at)"
+
+# 오탐 금지(있으면 회귀)
+must_not:
+  - { id: missing_index, at: UserMapper.xml, reason: "users.id 는 PK → 인덱스 있음(IN 조회 커버)" }
+
+# 실행 계획에 포함되어야 할 항목
+must_action:
+  - { label: "[자동적용]", about: "인덱스 마이그레이션 추가", severity: critical }

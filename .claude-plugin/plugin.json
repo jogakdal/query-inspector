@@ -1,0 +1,29 @@
+{
+  "name": "query-inspector",
+  "displayName": "Query Inspector",
+  "version": "1.0.0",
+  "description": "A Claude Code plugin that inspects the SQL and ORM-generated queries in your changes. Two skills: tuning-report (catch missing indexes, N+1s, anti-patterns before commit, with an optional live-DB EXPLAIN tier) and inventory-report (catalog project queries with purpose, target tables, and index coverage). Incremental by default; Kotlin/Java + MyBatis / native SQL / JPA (QueryDSL, Kotlin JDSL); dialect auto-detection.",
+  "author": {
+    "name": "Yongho Hwang(황용호)",
+    "email": "jogakdal@gmail.com"
+  },
+  "homepage": "https://github.com/jogakdal/query-inspector",
+  "repository": "https://github.com/jogakdal/query-inspector",
+  "license": "MIT",
+  "documentationUrl": "https://github.com/jogakdal/query-inspector/blob/main/MANUAL.md",
+  "supportUrl": "https://github.com/jogakdal/query-inspector/issues",
+  "termsOfServiceUrl": "https://github.com/jogakdal/query-inspector/blob/main/LICENSE",
+  "privacyPolicyUrl": "https://github.com/jogakdal/query-inspector/blob/main/PRIVACY.md",
+  "keywords": [
+    "tuning",
+    "sql",
+    "orm",
+    "jpa",
+    "mybatis",
+    "index",
+    "n+1",
+    "performance",
+    "database",
+    "code-review"
+  ]
+}

@@ -1,0 +1,96 @@
+# query-inspector 설정 템플릿
+# ---------------------------------------------------------------------------
+# 사용법: 이 파일을 프로젝트 루트에 `.query-inspector.yml`로 복사한 뒤 값을 조정합니다.
+#   cp .query-inspector.example.yml .query-inspector.yml
+#
+# ⚠️ 보안: `.query-inspector.yml`은 자격증명 "참조"만 담습니다(실제 URL/비밀번호 금지).
+#          실제 DB 접속값은 반드시 환경변수로만 주입하세요. (DESIGN.md §7-6)
+#          이 파일과 .yml은 저장소 커밋을 금지합니다(.gitignore에 등록).
+# ---------------------------------------------------------------------------
+
+version: 1
+
+# 활성 어댑터 — 변경 파일을 어느 추출 규칙으로 라우팅할지.
+#   mybatis · native-sql · jpa(Spring Data/JPQL/QueryDSL/Kotlin JDSL) = 기본 활성.
+#   migration은 stacks 활성 시 마이그레이션 SQL도 튜닝 대상(비활성이어도 Tier2 인덱스 소스로 자동 감지).
+#   Django 프로젝트면 python-django를 추가한다(확장 어댑터). 예: stacks: [python-django]
+#   SQLAlchemy 프로젝트면 python-sqlalchemy. 예: stacks: [python-sqlalchemy]
+stacks: [mybatis, native-sql, jpa]
+
+# SQL 방언(dialect) — mysql | mariadb | postgresql | oracle | ansi | auto
+#   auto: 빌드 의존성 / datasource URL / Hibernate dialect / 마이그레이션 SQL 특성으로
+#         방언을 추론하고, 판별 실패 시 mysql로 폴백합니다(references/dialect-detection.md).
+dialect: auto
+
+# Tier2(스키마 컨텍스트) 소스 — 비워두면 자동 감지되며, 지정하면 우선/보강합니다.
+#   자동 감지: 엔티티(@Entity/@Table 애노테이션)·마이그레이션(관례 경로 db/migration/**)은
+#             설정 없이도 소스에서 찾습니다.
+#   --db 제공 시: 실 DB 스키마(SHOW INDEX·information_schema)를 직접 조회 — 최우선·최정확.
+schema:
+  ddl: []                                   # 예: [db/schema.sql, db/indexes.sql]
+  entities: []                              # 예: [src/main/kotlin/**/entity/**]
+  migrations: []                            # 예: [src/main/resources/db/migration/**]
+
+# 튜닝 깊이 — auto | static | schema | explain
+#   auto: 가능한 최고 단계를 자동 선택하고, 조건 미충족 시 하위 단계로 강등(리포트에 명시).
+depth: auto
+
+report:
+  dir: docs/query-inspector                 # 리포트 루트(하위: tuning-reports/, inventory-reports/)
+  language: auto                            # 출력 언어: auto | ko | en | ja | zh ...
+                                            #   auto = 사용자 대화 언어를 따름(감지 불가 시 en)
+                                            #   식별자(휴리스틱 ID·라벨·설정 키)는 언어 무관 유지.
+                                            #   자세한 정책: references/i18n.md
+  min_severity: info                        # info | warn | critical (터미널 요약 하한선)
+  terminal_top_n: 10                        # 터미널에 위험도순 상위 N개 표시
+  update_check: true                        # 시작 시 새 버전 확인(하루 1회). 스킬 설치=동의 후 self-update / 플러그인=안내. false로 끄기
+
+# 증분 튜닝 & 이전 제안 검증 상태 (references/state-and-followup.md)
+#   기본 동작: "마지막 튜닝 이후" 변경분만 대상(첫 실행이면 전체). --all 로 전체 강제.
+state:
+  enabled: true                             # false면 매번 staged 기본(상태 미사용)
+  file: docs/query-inspector/tuning-reports/state.json        # 마지막 튜닝 커밋 + 미해결 제안 저장
+  shared: false                             # false=로컬(gitignore) / true=커밋해 팀 공유
+
+# 심각도 규칙 — 팀별 커스터마이즈(휴리스틱 ID → info|warn|critical)
+severity_rules:
+  missing_index: critical         # ★ 간판 표적(인덱스 누락) — Tier2. 이 도구의 핵심 동기
+  n_plus_one: critical
+  dialect_pipe_concat: critical   # 방언 불일치(MySQL '||' 등) — 정확성
+  string_substitution: critical   # ${}/문자열결합 인젝션 — 보안(가장 심각) · MyBatis·native 공통
+  order_by_filesort: info         # 정렬 인덱스 부재(heuristics 기본 info) — Tier2에서 missing_index로 승격
+  select_star: warn
+  non_sargable_predicate: warn
+  derived_table_filter: warn      # 파생 테이블 밖 필터(조건 푸시다운 실패) — 레거시 MyBatis 목록 쿼리
+  leading_wildcard_like: warn
+  unbounded_result: warn
+  large_in_clause: info
+  implicit_type_cast: warn
+  deep_pagination: info
+  cartesian_join: critical        # 카티전 곱/조인 조건 누락 — 결과 폭증
+  correlated_subquery: info
+  distinct_abuse: info
+  or_predicate_index: info
+  count_large: info
+  transaction_lock_scope: info
+  # 여기 나열되지 않은 ID는 references/heuristics.md의 각 항목 기본 심각도를 따른다.
+
+# ---------------------------------------------------------------------------
+# Tier3 (실 DB EXPLAIN) — 선택. 제공하지 않으면 정적/스키마 분석까지만 수행.
+# 기본은 비활성이며, 항상 사용자가 `--db <profile>`로 명시할 때만 켜집니다(opt-in).
+# ---------------------------------------------------------------------------
+db:
+  # 자격증명: url_env 환경변수 → env_file(.env) → 프로젝트 datasource 설정 자동 추출
+  #           (application.yml/.properties 등, run_explain.py --source-config; 운영 설정 제외·접속 전 확인) → 사용자 요청.
+  #   비밀번호 가려서 저장(숨김 입력→.env 0600):  ! python3 scripts/set_db_credential.py --var QT_DEV_DB_URL  (Windows는 python/py)
+  env_file: .env                            # 자격증명을 담은 파일(gitignore). 셸 환경변수가 우선.
+  prod_guard: true                          # 프로덕션 호스트/이름 패턴 원천 차단(기본 켬)
+  profiles:
+    dev:
+      url_env: QT_DEV_DB_URL               # 실제 접속 URL은 이 환경변수 또는 .env에서만 읽음
+      readonly: true                        # 읽기 전용 계정 사용 강제 권장
+      allow_explain_analyze: false          # EXPLAIN ANALYZE(실제 실행) 허용 여부
+      host_allowlist: [localhost, 127.0.0.1, dev-db.internal]  # 개발 DB 호스트/IP(예: 10.x 사설 IP)를 여기에 추가 — allowlist 밖은 차단됨
+      host_denylist_patterns: ["*prod*", "*live*", "*production*"]
+      statement_timeout_ms: 3000            # 문장 타임아웃
+      max_rows: 100000                      # 예상 스캔 rows 상한(초과 시 경고)

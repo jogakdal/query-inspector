@@ -1,0 +1,30 @@
+# 골든 기대 — tests/fixtures/jpa-sample (jpa 어댑터, M2)
+# 엔티티 매핑 + 파생 메서드 + @Query에서 missing_index·n_plus_one·leading_wildcard를 잡는지.
+fixture: tests/fixtures/jpa-sample
+stack: jpa
+dialect:
+  expect: mysql
+  evidence: "build.gradle (mysql-connector-j)"
+schema_note: >-
+  Order 엔티티 @Table(name="orders")에 @Index 미정의. orders(status, created_at, user_id) 인덱스 없음.
+  DDL이 없으면 SCHEMA-PARTIAL로 "확인 필요"로 낮춘다(엔티티 매핑만으로도 인덱스 미정의는 판정 가능).
+
+must_detect:
+  - { id: missing_index,         at: OrderRepository.kt, note: "파생 findBy...OrderBy... → orders(status, created_at)" }
+  - { id: missing_index,         at: Order.kt,           note: "@JoinColumn user_id FK 인덱스 없음" }
+  - { id: n_plus_one,            at: Order.kt,            note: "@ManyToOne(LAZY) user 를 목록 순회에서 접근 시" }
+  - { id: leading_wildcard_like, at: OrderRepository.kt,  note: "@Query ... like %:name%" }
+  - { id: order_by_filesort,     at: OrderRepository.kt,  note: "ORDER BY created_at DESC 인덱스 부재" }
+
+must_suggest_index:
+  - "orders (status, created_at)"
+  - "orders (user_id)"
+
+# 파생 메서드 → SQL 번역이 맞는지(핵심 검증)
+must_translate:
+  - method: findByStatusAndCreatedAtAfterOrderByCreatedAtDesc
+    sql_like: "WHERE status = ? AND created_at > ? ORDER BY created_at DESC"
+    label: INFERRED
+
+must_note:
+  - "모든 jpa 추론은 show_sql 검증 안내를 포함해야 함(과신 방지)"

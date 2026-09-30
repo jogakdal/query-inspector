@@ -1,0 +1,34 @@
+# 골든 기대 - tests/fixtures/django-sample (python-django 어댑터)
+# Django QuerySet/모델에서 missing_index/n_plus_one/leading_wildcard를 잡고,
+# FK 기본 인덱스는 오탐하지 않는지 검증한다.
+fixture: tests/fixtures/django-sample
+stack: python-django
+dialect:
+  expect: postgresql
+  evidence: "requirements.txt (psycopg2-binary)"
+schema_note: >-
+  Order 모델에 Meta.indexes 미정의 -> orders(status, created_at) 인덱스 없음.
+  단 user FK는 Django가 기본 인덱스를 생성하므로 user_id는 missing_index가 아니다(오탐 금지).
+
+must_detect:
+  - { id: missing_index,         at: views.py, note: "filter(status).order_by(-created_at) -> orders(status, created_at)" }
+  - { id: n_plus_one,            at: views.py, note: "루프에서 o.user 접근, select_related('user') 누락" }
+  - { id: leading_wildcard_like, at: views.py, note: "user__name__icontains -> LIKE '%q%'" }
+  - { id: order_by_filesort,     at: views.py, note: "order_by('-created_at') 인덱스 부재" }
+
+must_suggest_index:
+  - "orders (status, created_at)"
+
+# Django 특유: 오탐하면 안 되는 것
+must_not_detect:
+  - { id: missing_index, at: models.py, note: "user_id FK는 Django 기본 인덱스 -> missing_index로 지적 금지" }
+
+# QuerySet -> SQL 번역이 맞는지(핵심 검증)
+must_translate:
+  - query: 'Order.objects.filter(status="paid").order_by("-created_at")'
+    sql_like: "WHERE status = ? ORDER BY created_at DESC"
+    label: INFERRED
+
+must_note:
+  - "모든 python-django 추론은 qs.query/connection.queries 검증 안내를 포함해야 함(과신 방지)"
+  - "N+1 해소는 select_related('user')로 안내"

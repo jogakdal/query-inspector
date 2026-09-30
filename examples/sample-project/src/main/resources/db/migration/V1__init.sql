@@ -1,0 +1,2 @@
+CREATE TABLE users (id BIGINT PRIMARY KEY AUTO_INCREMENT, name VARCHAR(100));
+CREATE INDEX idx_users_name ON users(name);

@@ -1,0 +1,20 @@
+# query-inspector Tier3 검증용 로컬 MySQL
+# 사용:  docker compose -f examples/docker-mysql/docker-compose.yml up -d
+#        (Docker Desktop 실행 필요)
+# 접속 URL(읽기 전용 계정):  mysql://dqt_ro:dqt_ro@127.0.0.1:13306/demo
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: dqt-demo-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: demo
+    ports:
+      - "13306:3306"          # 로컬 13306 → 컨테이너 3306 (기존 MySQL과 충돌 회피)
+    volumes:
+      - ./db-init:/docker-entrypoint-initdb.d:ro   # 최초 기동 시 스키마/데이터 로드
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-proot"]
+      interval: 3s
+      timeout: 3s
+      retries: 20

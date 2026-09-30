@@ -1,0 +1,20 @@
+# query-inspector Tier3 검증용 로컬 PostgreSQL
+# 사용:  docker compose -f examples/docker-postgres/docker-compose.yml up -d
+#        (Docker Desktop 실행 필요)
+# 접속 URL(읽기 전용 계정):  postgresql://dqt_ro:dqt_ro@127.0.0.1:15432/demo
+services:
+  postgres:
+    image: postgres:16
+    container_name: dqt-demo-postgres
+    environment:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: demo
+    ports:
+      - "15432:5432"          # 로컬 15432 -> 컨테이너 5432 (기존 PostgreSQL과 충돌 회피)
+    volumes:
+      - ./db-init:/docker-entrypoint-initdb.d:ro   # 최초 기동 시 스키마/데이터 로드
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d demo"]
+      interval: 3s
+      timeout: 3s
+      retries: 20

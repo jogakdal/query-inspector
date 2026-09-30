@@ -1,0 +1,25 @@
+# Claude Code local config
+CLAUDE.md
+.claude
+
+# 개인/프로젝트 설정(자격증명 참조 포함) — 값은 env로만
+.query-inspector.yml
+.env
+
+# 사내 동기화 프로파일(사내 고유값 — 공개 저장소에 커밋 금지). 형식은 internal.profile.example 참고
+sync/internal.profile
+
+# 생성 리포트 + 상태(state.shared:true면 state.json은 예외적으로 커밋)
+docs/query-inspector/
+
+# Python 개발 환경(Tier3 검증용)
+.venv/
+__pycache__/
+*.pyc
+
+# OS
+.DS_Store
+
+# IDE / 로컬
+.idea/
+.openchrome/
