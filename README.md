@@ -2,8 +2,8 @@
 
 **English** | [한국어](./README.ko.md)
 
-> query-inspector is a Claude Code plugin with **two skills** for the SQL and ORM-generated queries in your project.<br>
-> **`tuning-report`** tunes the queries in your changes (N+1s, missing indexes, anti-patterns), and **`inventory-report`** catalogs every query the project runs.
+> query-inspector is a **Claude Code skill for SQL and ORM query tuning**, packaged as a plugin with **two skills**.<br>
+> **`tuning-report`** performs **query tuning** on the queries in your changes (N+1s, missing indexes, anti-patterns), and **`inventory-report`** catalogs every SQL/ORM query the project runs.
 
 - Design doc: [DESIGN.md](./DESIGN.md)
 - User manuals: overview **[MANUAL.md](./MANUAL.md)** - per skill **[tuning-report](./MANUAL-tuning-report.md)** / **[inventory-report](./MANUAL-inventory-report.md)**

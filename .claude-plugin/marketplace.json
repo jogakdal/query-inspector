@@ -5,19 +5,19 @@
     "email": "jogakdal@gmail.com"
   },
   "description": "Marketplace for the query-inspector Claude Code plugin.",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "plugins": [
     {
       "name": "query-inspector",
       "displayName": "Query Inspector",
       "source": "./",
-      "description": "Inspects SQL and ORM-generated queries in your changes — tuning-report (missing indexes, N+1s, anti-patterns) and inventory-report (query catalog).",
-      "version": "1.0.0",
+      "description": "A Claude Code plugin for SQL and ORM query tuning - inspects the queries in your changes. tuning-report (missing indexes, N+1s, anti-patterns) and inventory-report (query catalog).",
+      "version": "1.0.1",
       "author": {
         "name": "Yongho Hwang(황용호)",
         "email": "jogakdal@gmail.com"
       },
-      "keywords": ["tuning", "sql", "orm", "jpa", "mybatis", "index", "n+1", "performance"],
+      "keywords": ["query-tuning", "query-inspector", "claude-code", "tuning", "sql", "orm", "jpa", "mybatis", "index", "n+1", "performance"],
       "category": "productivity"
     }
   ]

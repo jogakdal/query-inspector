@@ -2,8 +2,8 @@
 
 [English](./README.md) | **한국어**
 
-> Query-inspector는 프로젝트의 SQL과 ORM 생성 쿼리를 다루는 **두 스킬**을 가진 Claude Code 플러그인입니다.<br> 
-> **`tuning-report`** 는 변경분의 쿼리를 튜닝하고(N+1/인덱스 미스/안티패턴), **`inventory-report`** 는 프로젝트가 실행하는 모든 쿼리를 목록화합니다.
+> Query-inspector는 **SQL/ORM 쿼리 튜닝을 수행하는 Claude Code 스킬**로, **두 스킬**을 가진 플러그인입니다.<br> 
+> **`tuning-report`** 는 변경분에 대해 **쿼리 튜닝**을 수행하고(N+1/인덱스 누락/안티패턴), **`inventory-report`** 는 프로젝트가 실행하는 모든 SQL/ORM 쿼리를 목록화합니다.
 
 - 설계 문서: [DESIGN.md](./DESIGN.md)
 - 사용자 매뉴얼: 개요 **[MANUAL.ko.md](./MANUAL.ko.md)** - 스킬별 **[tuning-report](./MANUAL-tuning-report.ko.md)** / **[inventory-report](./MANUAL-inventory-report.ko.md)**
