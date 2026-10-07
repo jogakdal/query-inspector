@@ -31,7 +31,7 @@ SQLAlchemy(ORM + Core)가 **생성할 SQL을 추론**한다. `session.query`/`se
 | `.order_by(Model.f.desc())` | `ORDER BY f DESC` -> Tier2 `order_by_filesort`/`missing_index` |
 | `.limit(n)` / `.offset(m)` | `LIMIT n` / `OFFSET m` -> 큰 offset이면 `deep_pagination` |
 | `.group_by(...)`/`.having(...)` | `GROUP BY`/`HAVING` |
-| `.distinct()` | `DISTINCT` -> 불필요하면 `redundant_distinct` |
+| `.distinct()` | `DISTINCT` -> 불필요하면 `distinct_abuse` |
 | `.count()` | `SELECT COUNT(*)`(서브쿼리로 감싸질 수 있음) |
 | `.first()`/`.one()`/`.one_or_none()` | 단건(`one`은 0/2+건 예외) |
 | `text("SQL")` | 원본 SQL 그대로(라벨 `EXACT`) -> `native-sql` 규칙 |

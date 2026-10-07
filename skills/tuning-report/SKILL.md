@@ -67,9 +67,9 @@ allowed-tools: Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/collect_diff.py *), Ba
    - 프로덕션 호스트/이름 패턴/`SELECT`/`EXPLAIN` 외 문장/denylist 매칭이면 차단.
 2. 통과한 SELECT만 `run_explain.py`로 `EXPLAIN`(비실행). **Stage 0.5 감지 방언을 반드시 `--dialect`로 전달**(미전달 시 기본 `mysql`이라 MariaDB에서 실패 가능).
    ```bash
-   python3 "${CLAUDE_PLUGIN_ROOT}/scripts/run_explain.py" --profile <profile> --config .query-inspector.yml --sql-file <추출된_select.sql> --dialect <mysql|mariadb> [--source-config <application-local.yml 등>] [--analyze]
+   python3 "${CLAUDE_PLUGIN_ROOT}/scripts/run_explain.py" --profile <profile> --config .query-inspector.yml --sql-file <추출된_select.sql> --dialect <mysql|mariadb|postgresql> [--source-config <application-local.yml 등>] [--analyze]
    ```
-   - 감지 방언이 `mysql`/`mariadb`가 아니면(`ansi` 폴백) `--dialect mysql`로 근사. PostgreSQL/Oracle은 미구현(종료코드 3 -> Tier2 유지).
+   - MySQL/MariaDB/PostgreSQL을 지원한다(감지 방언을 `--dialect`로 전달). 그 외(Oracle 등)는 Tier3 미구현(종료코드 3 -> Tier2 유지).
    - `EXPLAIN ANALYZE`(실제 실행)는 프로파일 `allow_explain_analyze: true` + 사용자 확인 + `--analyze`일 때만. 트랜잭션 열고 무조건 롤백.
 3. 어떤 쿼리를 어느 DB에 던졌는지 **감사 로그로 리포트에 기록**.
 4. DML/DDL은 **실행하지 않는다**(정적/스키마 분석만).
@@ -108,8 +108,8 @@ python3 "${CLAUDE_PLUGIN_ROOT}/scripts/blame_author.py" --file <경로> --lines 
 
 ## 지금 되는 것 / 한계
 
-- ✅ Stage0 수집, 방언 자동 감지(MySQL/MariaDB), `mybatis`/`native-sql`/`jpa`(추론) 추출, Tier1 휴리스틱 + Tier2 인덱스 대조, Tier3 실 DB EXPLAIN(`--db` opt-in), 증분/점진 + follow-up, 리포트 + 실행 계획.
+- ✅ Stage0 수집, 방언 자동 감지(MySQL/MariaDB/PostgreSQL), `mybatis`/`native-sql`/`jpa`(추론) 추출, Tier1 휴리스틱 + Tier2 인덱스 대조, Tier3 실 DB EXPLAIN(`--db` opt-in), 증분/점진 + follow-up, 리포트 + 실행 계획.
 - 🔎 `jpa`/동적 쿼리는 추론(`INFERRED`/`AMBIGUOUS`)이며 `show_sql` 검증을 함께 안내(과신 금지).
-- 🟠 방언 심화는 MySQL/MariaDB 우선(PostgreSQL/Oracle 스텁). Python/Node 어댑터는 미구현 - `references/adapters/_template.md`로 확장.
+- 🟠 방언 심화는 MySQL/MariaDB/PostgreSQL 지원(Oracle은 스텁). Python(Django/SQLAlchemy) 어댑터는 확장으로 제공(주력 JVM 스택만큼 검증되지는 않음). Node 등 그 외 스택은 미구현 - `references/adapters/_template.md`로 확장.
 
 범위를 벗어난 요청은 **할 수 있는 만큼만 하고 한계를 분명히 밝힌다.** 없는 정확도를 지어내지 않는다.

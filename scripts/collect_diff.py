@@ -40,7 +40,8 @@ for _s in (sys.stdout, sys.stderr):
 STATE_DEFAULT = "docs/query-inspector/tuning-reports/state.json"
 # MyBatis 매퍼 XML 판정(설정 XML과 구분): <mapper namespace 또는 CRUD 태그.
 _XML_RE = re.compile(r"<mapper\s+namespace|<(?:select|insert|update|delete)[\s>]", re.I)
-_CAND_RE = re.compile(r"[Rr]epository|[Mm]apper|[Dd]ao|[Ee]ntity")
+# 쿼리 생성 후보 파일명(규모 추정용): JVM 네이밍 + Python(Django/SQLAlchemy) 네이밍.
+_CAND_RE = re.compile(r"[Rr]epository|[Mm]apper|[Dd]ao|[Ee]ntity|models|views|serializers|managers|tasks")
 
 
 def git(*args):
@@ -70,8 +71,10 @@ def classify(f: str) -> str:
     if (("/migration/" in lower and lower.endswith(".sql"))
             or "/db/changelog/" in lower
             or ("changelog" in lower and lower.endswith(".sql"))
-            or "flyway" in lower or "liquibase" in lower):
-        return "migration-sql"
+            or "flyway" in lower or "liquibase" in lower
+            or ("/migrations/" in lower and lower.endswith(".py") and not lower.endswith("__init__.py"))
+            or ("/versions/" in lower and lower.endswith(".py") and not lower.endswith("__init__.py"))):
+        return "migration-sql"                      # Flyway/Liquibase(.sql) + Django(migrations/*.py)/Alembic(versions/*.py)
     if lower.endswith(".sql"):
         return "sql"
     if lower.endswith((".kt", ".kts", ".java", ".scala", ".groovy", ".py")):

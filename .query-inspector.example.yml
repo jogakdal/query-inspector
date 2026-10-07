@@ -13,8 +13,9 @@ version: 1
 # 활성 어댑터 — 변경 파일을 어느 추출 규칙으로 라우팅할지.
 #   mybatis · native-sql · jpa(Spring Data/JPQL/QueryDSL/Kotlin JDSL) = 기본 활성.
 #   migration은 stacks 활성 시 마이그레이션 SQL도 튜닝 대상(비활성이어도 Tier2 인덱스 소스로 자동 감지).
-#   Django 프로젝트면 python-django를 추가한다(확장 어댑터). 예: stacks: [python-django]
-#   SQLAlchemy 프로젝트면 python-sqlalchemy. 예: stacks: [python-sqlalchemy]
+#   python-django / python-sqlalchemy(확장) = Django / SQLAlchemy 의존이 감지되면 자동 활성되므로
+#     보통 명시할 필요가 없다. 자동 감지를 끄고 고정하고 싶을 때만 지정.
+#     예: stacks: [mybatis, native-sql, jpa, python-django]
 stacks: [mybatis, native-sql, jpa]
 
 # SQL 방언(dialect) — mysql | mariadb | postgresql | oracle | ansi | auto

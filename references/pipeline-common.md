@@ -77,14 +77,14 @@ python3 "${CLAUDE_PLUGIN_ROOT}/scripts/collect_diff.py" --continue    # 점진 �
 | SQL 문자열, `JdbcTemplate`, `@Query(nativeQuery=true)`, 마이그레이션 내 DML | `native-sql` | `references/adapters/native-sql.md` | ✅ 완전 |
 | JPA `@Query`(JPQL)/파생 메서드/`@EntityGraph`/QueryDSL/**Kotlin JDSL** | `jpa` | `references/adapters/jpa.md` | ✅ **기본 활성**(추론/라벨 보수적) |
 | Flyway/Liquibase DDL | `migration` | `references/adapters/migration.md` | ✅ Tier2 인덱스 소스(자동 감지) |
-| Django ORM(QuerySet/모델/`migrations/*.py`) | `python-django` | `references/adapters/python-django.md` | 확장(`stacks`에 추가 시) |
-| SQLAlchemy(`session.query`/`select`/모델/Alembic `versions/*.py`) | `python-sqlalchemy` | `references/adapters/python-sqlalchemy.md` | 확장(`stacks`에 추가 시) |
+| Django ORM(QuerySet/모델/`migrations/*.py`) | `python-django` | `references/adapters/python-django.md` | 확장: 의존 감지 시 자동 활성 |
+| SQLAlchemy(`session.query`/`select`/모델/Alembic `versions/*.py`) | `python-sqlalchemy` | `references/adapters/python-sqlalchemy.md` | 확장: 의존 감지 시 자동 활성 |
 
 - **jpa 어댑터(기본 활성):** `jpa.md`대로 추론. 실 SQL은 Hibernate 생성이라 라벨을 보수적으로(`INFERRED`/`AMBIGUOUS`) 두고 `show_sql` 검증 안내(과신 금지). JPA 미사용 프로젝트엔 대상 파일이 없어 자연히 건너뜀. **migration**은 `stacks` 활성 시 튜닝 대상, 비활성이어도 Tier2 인덱스 소스로 자동 감지(`tier2-index-matching.md`).
 - 각 추출 결과에 **원천(파일:라인)** 과 **신뢰도 라벨**을 붙인다.
 - Spring Data JPA/Kotlin JDSL(`com.linecorp.kotlinjdsl`)/QueryDSL이 `build.gradle(.kts)`/`pom.xml`에서 감지되면 별도 설정 없이 추론(패턴은 `jpa.md`).
-- **python-django(확장):** `manage.py`/`settings.py`(`INSTALLED_APPS`/`DATABASES`)/`pyproject.toml`/`requirements*.txt`에서 `django` 의존이 감지되면, `stacks`에 `python-django`를 추가해 분석한다(규칙은 `python-django.md`). Django 미사용 프로젝트엔 대상이 없어 자연히 건너뜀.
-- **python-sqlalchemy(확장):** `pyproject.toml`/`requirements*.txt`에서 `sqlalchemy`(또는 `alembic`)가 감지되면, `stacks`에 `python-sqlalchemy`를 추가해 분석한다(규칙은 `python-sqlalchemy.md`).
+- **python-django(의존 감지 시 자동 활성):** `manage.py`/`settings.py`(`INSTALLED_APPS`/`DATABASES`)/`pyproject.toml`/`requirements*.txt`에서 `django` 의존이 감지되면, **JPA와 동일 원칙으로 별도 설정 없이** `stacks`에 `python-django`를 추가해 분석한다(규칙은 `python-django.md`). Django 미사용 프로젝트엔 대상이 없어 자연히 건너뜀.
+- **python-sqlalchemy(의존 감지 시 자동 활성):** `pyproject.toml`/`requirements*.txt`에서 `sqlalchemy`(또는 `alembic`)가 감지되면, **별도 설정 없이** `stacks`에 `python-sqlalchemy`를 추가해 분석한다(규칙은 `python-sqlalchemy.md`). SQLAlchemy 미사용 프로젝트엔 대상이 없어 자연히 건너뜀.
 - **트레이드오프(설계):** 방언 판정/스키마 인벤토리/쿼리 추출은 스크립트가 아니라 **LLM이 파일을 읽어 수행**한다(`collect_diff.py`만 스크립트). 대형 프로젝트에선 `--count-only`로 규모를 먼저 파악하고 **점진 배치**(도메인 단위)로 처리량을 통제한다.
 
 ## Stage 2 - 예상 쿼리 재구성 (필요 시)

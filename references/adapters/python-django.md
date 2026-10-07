@@ -34,7 +34,7 @@ Django ORM이 **생성할 SQL을 추론**한다. QuerySet 체인과 관계 접�
 | `.order_by('f', '-f')` | `ORDER BY f ASC/DESC` -> Tier2 `order_by_filesort`/`missing_index` |
 | `.values('a')`/`.values_list()`/`.only()`/`.defer()` | 프로젝션(SELECT 컬럼 한정) |
 | `.annotate(...)`/`.aggregate(...)` | 집계/`GROUP BY` |
-| `.distinct()` | `DISTINCT` -> 불필요하면 `redundant_distinct` |
+| `.distinct()` | `DISTINCT` -> 불필요하면 `distinct_abuse` |
 | `.count()` | `SELECT COUNT(*)` |
 | `.exists()` | `SELECT 1 ... LIMIT 1` |
 | `.first()`/`.last()`/`[:n]` | `ORDER BY ... LIMIT n` |
