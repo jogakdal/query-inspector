@@ -23,6 +23,7 @@
 
 - **`--help`/`-h`/`help`:** `${CLAUDE_PLUGIN_ROOT}/assets/help.md`를 바탕으로 도움말을 출력하고 **즉시 종료**(수집/분석 없음). `help.md`는 영어(정본)지만 **출력층**이라 `report.language`가 영어가 아니면 그 언어로 렌더한다(옵션/플래그/경로 등 식별자는 그대로).
 - **`--version`:** `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/version_check.py" --skill-dir "${CLAUDE_PLUGIN_ROOT}" --local`로 **버전을 출력하고 즉시 종료**. 출력 예: `query-inspector v1.0.0 (plugin)`.
+- **`--self-diagnose-internal`(내부 전용/undocumented):** 정상 실행에 더해 **자가 진단 리포트**를 추가 생성한다(스킬 자신의 실행 환경/지침 품질/버그/개선점을 관찰해 로컬에 기록, 온라인 전송 없음). 절차/관찰 항목/저장 규칙은 `references/self-diagnostic.md`. 이 플래그와 자가 진단은 help/README/MANUAL에 **노출하지 않는다**(사용자 대면 도움말에서 제외).
 
 ## Stage 0 이전 - 업데이트 체크 (하루 1회 / 조용히 / 선택)
 

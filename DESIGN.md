@@ -384,6 +384,7 @@ description: >-
 - `claude plugin eval` 스위트로 회귀 방지(샘플 리포지토리 fixtures + 기대 리포트). -> `evals/`, `tests/expected/*.yml`.
 - 문서: README(설치/5분 시작), 지원 매트릭스, DB 가드레일 고지, 정확도 한계 명시.
 - 보안 고지: DB 접속 옵션이 있으므로 "프로덕션 금지/읽기전용 권장/자격증명 커밋 금지"를 README 상단에 강조.
+- **자가 진단(내부 전용/undocumented):** `--self-diagnose-internal`을 주면 정상 실행에 더해 스킬 실행 주체가 실행 환경/지침 품질/버그/개선점을 관찰해 `docs/query-inspector/diagnostics/`에 로컬 진단 리포트를 추가 생성한다(온라인 전송 없음, 스크립트 로직 변경 없음). 반복 개선/검증용 dogfooding 수단. 절차는 `references/self-diagnostic.md`, 사용자 대면 문서(help/README/MANUAL)에는 비노출.
 
 ### 12.3 버전/호환
 

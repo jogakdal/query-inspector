@@ -5,6 +5,11 @@
 
 > 플러그인 갱신(`claude plugin update`)은 버전 비교로 동작하므로, 스킬 내용을 바꿀 때는 `plugin.json`/`marketplace.json`의 버전을 함께 올립니다.
 
+## [1.0.3] - 2026-10-07
+
+### Added
+- **(내부 전용/undocumented) `--self-diagnose-internal`** - 정상 실행에 더해, 스킬을 실행하는 주체(AI)가 실행 환경/지침 품질/버그/개선점을 관찰해 `docs/query-inspector/diagnostics/`에 **자가 진단 리포트**를 추가 생성한다(정규 리포트와 별개, 온라인 전송 없음). 반복 개선/검증용. 절차는 `references/self-diagnostic.md`. help/README/MANUAL에는 노출하지 않는다(스크립트 로직 변경 없음).
+
 ## [1.0.2] - 2026-10-07
 
 ### Changed
