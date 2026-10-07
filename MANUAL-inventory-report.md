@@ -21,12 +21,12 @@ The manual for **`inventory-report`**, one of query-inspector's two skills. It *
 
 ## 2. Install
 
-The plugin (default) is recommended for its easy updates; `--skill` installs the files directly.
+query-inspector installs as a plugin (there is no skill-copy install - the two skills share assets under one namespace). Use `--local` to install from your own checkout instead of the public marketplace.
 
 ```bash
-bash query-inspector-setup.sh              # plugin, user-global (default) -> /query-inspector:inventory-report
-bash query-inspector-setup.sh --project    # plugin, project-local (this project only)
-bash query-inspector-setup.sh --skill      # install as a skill
+bash query-inspector-setup.sh              # user-global (default) -> /query-inspector:inventory-report
+bash query-inspector-setup.sh --project    # project-local (this project only)
+bash query-inspector-setup.sh --local      # install from THIS checkout (clone/fork/offline)
 ```
 On **Windows**, run `query-inspector-setup.bat` with the same options.<br>
 `--project` runs from the target project root (elsewhere, pass `--project <path>`).
@@ -182,10 +182,9 @@ db:
 ## 8. Auto-update
 
 The skill quietly checks **once a day** at runtime for a new version (it silently skips on a network/auth/git failure).
-- **Skill install (`--skill`)**: with your consent it updates immediately. The update takes effect from the next skill invocation (usually no claude restart; if it doesn't apply, restart claude).
-- **Plugin install**:
-  - It points you to run `claude plugin update query-inspector@query-inspector-marketplace` (restart claude to apply).
-  - Or turn on auto-update under `/plugin` -> Marketplaces to refresh automatically after session start.
+- It points you to run `claude plugin update query-inspector@query-inspector-marketplace` (restart claude to apply).
+- Or turn on auto-update under `/plugin` -> Marketplaces to refresh automatically after session start.
+- For a `--local` install, `git pull` in your checkout, then `claude plugin marketplace update ...` and `claude plugin update ...`.
 - Turn it off with `--no-update-check` or `report.update_check: false`.
 
 ---

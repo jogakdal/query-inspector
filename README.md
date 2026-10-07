@@ -52,7 +52,7 @@ Full guardrails: [DESIGN.md section 7](./DESIGN.md).
 
 ## Install
 
-**Install with the `claude` CLI** — register the marketplace and install. Plugin is the default method.
+**Install with the `claude` CLI** — register the marketplace and install.
 
 ```bash
 claude plugin marketplace add jogakdal/query-inspector
@@ -61,19 +61,19 @@ claude plugin install query-inspector@query-inspector-marketplace
 
 After install, invoke in a new session with `/query-inspector:tuning-report` or `/query-inspector:inventory-report`.
 
-> - If you cloned the repo, the setup script also works: `bash query-inspector-setup.sh` (options `--project` / `--skill`). On **Windows**, `query-inspector-setup.bat`.
+> - If you cloned the repo, the setup script also works: `bash query-inspector-setup.sh` (options `--project` / `--local`). On **Windows**, `query-inspector-setup.bat`.
 > - The runtime scripts are all Python, so it works the same on mac/linux/Windows.
 > - If the setup script won't run, grant execute permission (`chmod 755`) or run it via `bash`.
 
-- **Plugin (default)**
+- **Plugin install**
   - Registers the marketplace (`query-inspector-marketplace`) and installs the plugin (both skills).
   - Invoke with **`/query-inspector:tuning-report`** or **`/query-inspector:inventory-report`**; update with `claude plugin update query-inspector@query-inspector-marketplace` (restart to apply).
   - The setup script file alone is enough (no repo clone needed).
   - Defaults to user-global; `--project` selects project-local (this project only), run **from the target project root**.
   - Requires the `claude` CLI; a public repo is fetched anonymously (no auth needed).
-- **Skill (`--skill`)**
-  - Copies the plugin tree (both skills + shared assets) to `~/.claude/skills/query-inspector/` (default) or `<project>/.claude/skills/query-inspector/` (`--project`).
-  - Clones the repo automatically if the files aren't present locally.
+- **Local checkout (`--local`)**
+  - Registers your cloned/forked checkout as the marketplace and installs from it - for offline or modified builds, no network.
+  - There is no skill-copy install: the two skills share assets under the `/query-inspector:` namespace, which only resolves when the tree is loaded as a plugin.
 
 Full install guide (method comparison, manual install): **[INSTALL.md](./INSTALL.md)** <br>
 Usage, config, troubleshooting: overview **[MANUAL.md](./MANUAL.md)** or the per-skill manuals above.

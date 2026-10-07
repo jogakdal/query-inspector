@@ -52,7 +52,7 @@
 
 ## 설치
 
-**`claude` CLI로 마켓플레이스를 등록하고 설치합니다.** 기본은 플러그인 방식입니다.
+**`claude` CLI로 마켓플레이스를 등록하고 설치합니다.**
 
 ```bash
 claude plugin marketplace add jogakdal/query-inspector
@@ -61,19 +61,19 @@ claude plugin install query-inspector@query-inspector-marketplace
 
 설치 후 새 세션에서 `/query-inspector:tuning-report` 또는 `/query-inspector:inventory-report`로 호출합니다.
 
-> - 저장소를 clone했다면 설치 스크립트로도 됩니다: `bash query-inspector-setup.sh`(옵션 `--project` / `--skill`). **Windows**는 `query-inspector-setup.bat`.
+> - 저장소를 clone했다면 설치 스크립트로도 됩니다: `bash query-inspector-setup.sh`(옵션 `--project` / `--local`). **Windows**는 `query-inspector-setup.bat`.
 > - 실행 스크립트가 모두 파이썬으로 작성되어 mac/linux/Windows 공통으로 동작합니다.
 > - 설치 스크립트가 실행되지 않는 경우 실행 권한(`chmod 755`)을 부여하거나 `bash`를 사용하여 실행해 주세요.
 
-- **플러그인(기본)**
+- **플러그인 설치**
   - 마켓플레이스(`query-inspector-marketplace`)를 등록하고 플러그인(두 스킬)을 설치합니다.
   - 호출은 **`/query-inspector:tuning-report`** 또는 **`/query-inspector:inventory-report`**, 갱신은 `claude plugin update query-inspector@query-inspector-marketplace`(재시작 필요).
   - 설치 스크립트 한 파일만 있어도 동작합니다(저장소 clone 불필요).
   - 기본은 개인 글로벌(user)이며 `--project` 옵션으로 프로젝트 로컬(이 프로젝트에서만) 설치를 고를 수 있습니다(`--project`는 **대상 프로젝트 루트에서 실행**).
   - `claude` CLI가 필요하며, 공개 저장소는 익명으로 받으므로 별도 인증이 없어도 됩니다.
-- **스킬(`--skill`)**
-  - 플러그인 트리(두 스킬 + 공유 자산)를 `~/.claude/skills/query-inspector/`(기본) 또는 `<프로젝트>/.claude/skills/query-inspector/`(`--project`)에 복사합니다.
-  - 로컬에 파일이 없으면 저장소를 자동으로 clone합니다.
+- **로컬 체크아웃(`--local`)**
+  - clone/포크한 체크아웃을 마켓플레이스로 등록해 거기서 설치합니다 - 오프라인이나 수정판을 네트워크 없이 돌릴 때 씁니다.
+  - 스킬 복사 설치는 없습니다: 두 스킬이 `/query-inspector:` 네임스페이스 아래에서 자산을 공유하며, 이 구조는 트리를 플러그인으로 로드할 때만 해석됩니다.
 
 전체 설치 안내(방식 비교/수동 설치): **[INSTALL.ko.md](./INSTALL.ko.md)** <br>
 사용/설정/문제 해결: 개요 **[MANUAL.ko.md](./MANUAL.ko.md)** 또는 위 스킬별 매뉴얼

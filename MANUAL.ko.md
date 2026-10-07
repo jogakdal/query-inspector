@@ -41,7 +41,7 @@
 
 아래 항목은 여기서 요약하고, 각 스킬 매뉴얼에서 상세히 다룹니다.
 
-- **설치**: 설치 스크립트 하나(기본 플러그인, `--skill`은 파일 직접 설치). 전체 안내는 [INSTALL.ko.md](./INSTALL.ko.md), 요약은 각 스킬 매뉴얼 2절.
+- **설치**: 설치 스크립트 하나(플러그인 설치, `--local`로 내 체크아웃에서 설치). 전체 안내는 [INSTALL.ko.md](./INSTALL.ko.md), 요약은 각 스킬 매뉴얼 2절.
 - **옵션 적용 범위**: 
   - 공통 옵션: `--all` / `--range` / `--files` / `--staged` / `--continue` / `--dialect` / `--lang` / `--version` / `--help` 
   - 튜닝 전용 옵션: `--depth` / `--db` / `--no-state` / `--reset-state`

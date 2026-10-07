@@ -32,12 +32,12 @@ Kotlin/Java + MyBatis / 네이티브 SQL / JPA/Hibernate(파생 메서드 / `@Qu
 
 ## 2. 설치
 
-갱신이 편한 **플러그인(기본)** 을 권장합니다. `--skill`은 파일을 직접 설치합니다.
+query-inspector는 플러그인으로 설치합니다(스킬 복사 설치는 없음 - 두 스킬이 자산을 한 네임스페이스 아래에서 공유). 공개 마켓 대신 내 체크아웃에서 설치하려면 `--local`을 쓰세요.
 
 ```bash
-bash query-inspector-setup.sh              # 플러그인, 개인 글로벌(기본) -> /query-inspector:inventory-report
-bash query-inspector-setup.sh --project    # 플러그인, 프로젝트 로컬(이 프로젝트에서만)
-bash query-inspector-setup.sh --skill      # 스킬로 직접 설치
+bash query-inspector-setup.sh              # 개인 글로벌(기본) -> /query-inspector:inventory-report
+bash query-inspector-setup.sh --project    # 프로젝트 로컬(이 프로젝트에서만)
+bash query-inspector-setup.sh --local      # 이 체크아웃에서 설치(clone/포크/오프라인)
 ```
 **Windows**에서는 같은 옵션으로 `query-inspector-setup.bat`을 실행합니다.<br> 
 `--project`로 설치하실 때는 대상 프로젝트 루트에서 실행하세요(다른 위치면 `--project <경로>`).
@@ -198,10 +198,9 @@ db:
 ## 8. 자동 업데이트
 
 스킬은 실행 시 **하루 1회** 새 버전이 있는지 조용히 확인합니다(네트워크/인증/git 실패 시 그냥 넘어감).
-- **스킬 방식(`--skill`)**: 새 버전이 있으면 사용자 동의를 받아 즉시 갱신합니다. 갱신 내용은 다음 스킬 호출부터 적용됩니다(일반적으로 claude 재시작 불필요, 반영되지 않으면 claude를 새로 시작).
-- **플러그인 방식**: 
-  - `claude plugin update query-inspector@query-inspector-marketplace`를 실행하도록 안내합니다(적용하려면 claude 재시작). 
-  - 또는 `/plugin` -> Marketplaces에서 auto-update를 켜두면 세션 시작 시 자동으로 최신화됩니다.
+- `claude plugin update query-inspector@query-inspector-marketplace`를 실행하도록 안내합니다(적용하려면 claude 재시작).
+- 또는 `/plugin` -> Marketplaces에서 auto-update를 켜두면 세션 시작 시 자동으로 최신화됩니다.
+- `--local` 설치라면 체크아웃에서 `git pull` 후 `claude plugin marketplace update ...` 와 `claude plugin update ...` 를 실행합니다.
 - 끄기: `--no-update-check` 또는 설정 `report.update_check: false`
 
 ---

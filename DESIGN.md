@@ -373,9 +373,9 @@ description: >-
 
 ### 12.1 배포 (설치)
 
-- `query-inspector-setup.sh`로 두 방식을 제공합니다.
-  - **플러그인(기본)**: 마켓플레이스(`query-inspector-marketplace`, `.claude-plugin/marketplace.json`)을 등록하고 `query-inspector` 플러그인을 설치합니다. 호출은 `/query-inspector:tuning-report`, 갱신은 `claude plugin update query-inspector@query-inspector-marketplace`(재시작). 스크립트 한 파일만으로 동작합니다.
-  - **스킬(`--skill`)**: 스킬 표준 구조(`SKILL.md` + `references`/`scripts`/`assets`)를 개인 글로벌(`~/.claude/skills/`) 또는 프로젝트 로컬(`.claude/skills/`)에 배치합니다. 호출은 `/query-inspector:tuning-report`.
+- `query-inspector-setup.sh`는 플러그인 방식으로만 설치합니다(멀티스킬 + 공유 자산 + `/query-inspector:` 네임스페이스 구조라, 스킬 폴더 직접 복사는 공유 자산 경로/네임스페이스가 맞지 않아 지원하지 않음).
+  - **기본**: 공개 마켓플레이스(`query-inspector-marketplace`, `.claude-plugin/marketplace.json`)를 등록하고 `query-inspector` 플러그인을 설치합니다. 호출은 `/query-inspector:tuning-report`, 갱신은 `claude plugin update query-inspector@query-inspector-marketplace`(재시작). 스크립트 한 파일만으로 동작합니다.
+  - **`--local`**: 로컬 체크아웃(clone/포크/오프라인/수정판)을 마켓 소스로 등록해 거기서 설치합니다(수동 등가물: `claude plugin marketplace add ./<checkout>`). `--project`와 함께 쓰면 프로젝트 로컬 설치.
 - 팀 온보딩 문서 + `.query-inspector.example.yml` 제공. 방언/심각도 규칙은 프로젝트별 `.query-inspector.yml`로 오버라이드.
 - 설치/사용법 상세: [MANUAL.md](./MANUAL.md)(공식 사용자 매뉴얼).
 

@@ -1,7 +1,7 @@
 {
   "name": "query-inspector",
   "displayName": "Query Inspector",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "A Claude Code skill and plugin for SQL and ORM query tuning. It inspects the SQL and ORM-generated queries in your changes. Two skills: tuning-report (catch missing indexes, N+1s, anti-patterns before commit, with an optional live-DB EXPLAIN tier) and inventory-report (catalog project queries with purpose, target tables, and index coverage). Incremental by default; Kotlin/Java + MyBatis / native SQL / JPA (QueryDSL, Kotlin JDSL); dialect auto-detection.",
   "author": {
     "name": "Yongho Hwang(황용호)",

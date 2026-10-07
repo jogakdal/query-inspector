@@ -41,7 +41,7 @@ They are independent; run whichever fits, or both. `tuning-report` keeps increme
 
 Each item below is summarized here and covered in full in each skill's manual.
 
-- **Install**: one setup script (plugin by default, `--skill` for direct files). Full guide in [INSTALL.md](./INSTALL.md); short version in section 2 of either skill manual.
+- **Install**: one setup script (plugin install; `--local` to install from your own checkout). Full guide in [INSTALL.md](./INSTALL.md); short version in section 2 of either skill manual.
 - **Option scope**:
   - Common options: `--all` / `--range` / `--files` / `--staged` / `--continue` / `--dialect` / `--lang` / `--version` / `--help`
   - Tuning-only options: `--depth` / `--db` / `--no-state` / `--reset-state`
