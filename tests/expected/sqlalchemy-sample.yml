@@ -16,6 +16,8 @@ must_detect:
   - { id: n_plus_one,            at: queries.py, note: "루프에서 o.user 접근(lazy='select'), selectinload/joinedload 누락" }
   - { id: leading_wildcard_like, at: queries.py, note: "User.name.ilike('%q%') -> LIKE '%q%'" }
   - { id: order_by_filesort,     at: queries.py, note: "order_by(created_at.desc()) 인덱스 부재" }
+  - { id: string_substitution,   at: queries.py, note: "unsafe_search: text(f-string) 보간 -> SQL 인젝션 + 플랜 캐시 오염; :n 바인드 권장" }
+  - { id: select_star,           at: queries.py, note: "text SELECT * FROM users -> 명시 컬럼 권장" }
 
 must_suggest_index:
   - "orders (status, created_at)"

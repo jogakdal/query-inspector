@@ -61,6 +61,14 @@ WHERE/JOIN/ORDER BY 컬럼을 스키마와 대조한다. 규칙/판정은 `refer
 
 - `if`로 `filter`를 조건부로 이어 붙이는 체인, `and_()`/`or_()` 조합은 **대표 시나리오 2~3개**로 전개(`AMBIGUOUS`). 전수 X.
 
+## 원시 SQL 안티패턴 (`text()` / Core)
+
+`text("...")`와 Core의 원시 SQL은 `native-sql` 규칙을 그대로 적용한다(`references/adapters/native-sql.md`).
+
+- **문자열 보간 인젝션(`string_substitution` 🔴 critical):** `text(f"... WHERE x = {val}")`, `text("... WHERE x = " + val)`, `session.execute(text(f"..."))`처럼 **바인드가 아닌 f-string/`%`-format/`+` 결합**으로 값이 들어가면 `string_substitution`(SQL 인젝션 + 플랜 캐시 오염). `text("... WHERE x = :x").bindparams(x=val)`(또는 `:name`) 바인드로 치환한다.
+- **방언 이질(`dialect_pipe_concat`):** 원시 SQL에 `||`/`NVL`/`SYSDATE`/`ROWNUM`/`FROM DUAL` 등 **감지 방언과 다른 문법**이 있으면 표기. 단 `||`는 PostgreSQL/Oracle에선 표준 문자열 결합, MySQL에선 논리 OR이므로 **감지 방언 기준으로만** 판정한다(PostgreSQL 프로젝트의 `||`는 정상).
+- **`SELECT *`(`select_star`):** `text("SELECT * FROM ...")`은 `select_star`. ORM이 생성하는 전체 컬럼 SELECT(명시 컬럼)는 해당 없음.
+
 ## 신뢰도 라벨
 
 - `text("...")` 정적 문자열: `EXACT`.

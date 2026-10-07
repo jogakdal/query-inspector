@@ -1,4 +1,4 @@
-from sqlalchemy import select
+from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
 from .models import Order, User
@@ -28,3 +28,9 @@ def paid_orders_20(session: Session):
     # 2.0 스타일 select(); FK 조인(user_id)에 인덱스 없음 -> missing_index 대상
     stmt = select(Order).where(Order.status == "paid").limit(20)
     return session.execute(stmt).scalars().all()
+
+
+def unsafe_search(session: Session, name: str):
+    # f-string 보간 -> string_substitution(SQL 인젝션 + 플랜 캐시 오염) + SELECT * -> select_star
+    # 안전: text("SELECT id, name FROM users WHERE name = :n").bindparams(n=name)
+    return session.execute(text(f"SELECT * FROM users WHERE name = '{name}'")).all()

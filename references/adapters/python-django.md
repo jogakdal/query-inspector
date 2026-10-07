@@ -80,6 +80,14 @@ WHERE/JOIN/ORDER BY 컬럼을 스키마와 대조한다. 규칙/판정은 `refer
 
 - `if`로 `filter`를 조건부로 이어 붙이는 체인, `Q()` 조합, `**kwargs` 필터는 **대표 시나리오 2~3개**로 전개(`AMBIGUOUS`). 전수 X.
 
+## 원시 SQL 안티패턴 (`.raw()` / `.extra()`)
+
+`.raw()`/`.extra()`의 SQL 문자열은 `native-sql` 규칙을 그대로 적용한다(`references/adapters/native-sql.md`).
+
+- **문자열 보간 인젝션(`string_substitution` 🔴 critical):** `.raw(f"... WHERE x = {val}")`, `.raw("..." % val)`, `.extra(where=[f"..."])`처럼 **바인드가 아닌 f-string/`%`-format/`+` 결합**으로 값이 들어가면 `string_substitution`(SQL 인젝션 + 플랜 캐시 오염). `.raw(sql, params=[...])` / `.extra(..., params=[...])`의 **`%s` 플레이스홀더 바인드**로 치환한다.
+- **방언 이질(`dialect_pipe_concat`):** 원시 SQL에 `||`/`NVL`/`SYSDATE`/`ROWNUM`/`FROM DUAL` 등 **감지 방언과 다른 문법**이 있으면 표기(MySQL에서 `||`는 논리 OR -> 정확성 critical). 감지 방언 기준으로 판정.
+- **`SELECT *`(`select_star`):** `.raw("SELECT * FROM ...")`은 `select_star`.
+
 ## 신뢰도 라벨
 
 - `.raw("...")` 정적 문자열: `EXACT`.
