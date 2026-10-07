@@ -29,10 +29,14 @@ check "OrderMapper.xml → mybatis-xml"  'printf "%s" "$out" | grep -Eq "\[mybat
 check "V2__orders.sql → migration-sql" 'printf "%s" "$out" | grep -Eq "\[migration-sql\].*V2__orders.sql"'
 check "UserRepository.kt → source"     'printf "%s" "$out" | grep -Eq "\[source\].*UserRepository.kt"'
 rm -rf "$tmp"
+check ".py Django migration -> migration-sql" "python3 -c 'import sys; sys.path.insert(0,\"$SKILL/scripts\"); from collect_diff import classify; assert classify(\"app/migrations/0001_initial.py\")==\"migration-sql\"'"
+check ".py Alembic version -> migration-sql"  "python3 -c 'import sys; sys.path.insert(0,\"$SKILL/scripts\"); from collect_diff import classify; assert classify(\"alembic/versions/a1_x.py\")==\"migration-sql\"'"
+check ".py models.py -> source"               "python3 -c 'import sys; sys.path.insert(0,\"$SKILL/scripts\"); from collect_diff import classify; assert classify(\"app/models.py\")==\"source\"'"
+check ".py migrations/__init__.py -> source"  "python3 -c 'import sys; sys.path.insert(0,\"$SKILL/scripts\"); from collect_diff import classify; assert classify(\"app/migrations/__init__.py\")==\"source\"'"
 
 echo "== 3) 골든 기대 파일 존재/형식 =="
 have_yaml=0; python3 -c 'import yaml' 2>/dev/null && have_yaml=1
-for f in sample-project jpa-sample; do
+for f in sample-project jpa-sample django-sample sqlalchemy-sample; do
   check "expected/$f.yml 존재" "test -f '$HERE/expected/$f.yml'"
   if [ "$have_yaml" -eq 1 ]; then
     check "expected/$f.yml YAML 파싱" "python3 -c 'import yaml; yaml.safe_load(open(\"$HERE/expected/$f.yml\"))'"
@@ -40,9 +44,13 @@ for f in sample-project jpa-sample; do
 done
 [ "$have_yaml" -eq 1 ] || echo "  SKIP: PyYAML 없음 → YAML 파싱 검증 생략(pip install pyyaml)"
 
-echo "== 4) jpa fixture 존재 =="
-check "fixtures/jpa-sample/Order.kt"          "test -f '$HERE/fixtures/jpa-sample/Order.kt'"
+echo "== 4) fixture 존재 (JVM + Python) =="
+check "fixtures/jpa-sample/Order.kt"           "test -f '$HERE/fixtures/jpa-sample/Order.kt'"
 check "fixtures/jpa-sample/OrderRepository.kt" "test -f '$HERE/fixtures/jpa-sample/OrderRepository.kt'"
+check "fixtures/django-sample/models.py"       "test -f '$HERE/fixtures/django-sample/models.py'"
+check "fixtures/django-sample/views.py"        "test -f '$HERE/fixtures/django-sample/views.py'"
+check "fixtures/sqlalchemy-sample/models.py"   "test -f '$HERE/fixtures/sqlalchemy-sample/models.py'"
+check "fixtures/sqlalchemy-sample/queries.py"  "test -f '$HERE/fixtures/sqlalchemy-sample/queries.py'"
 
 echo "== 5) collect_diff 증분/전체 모드 =="
 t2="$(mktemp -d)"
