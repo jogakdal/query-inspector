@@ -109,6 +109,14 @@ def is_test_path(f: str) -> bool:
     return False
 
 
+def is_doc_or_build_path(f: str) -> bool:
+    """문서/패키징 스크립트 경로 판정(--all 전체 스캔의 노이즈 제외용, M3)."""
+    segs = f.lower().split("/")
+    if any(seg in ("docs", "doc") for seg in segs[:-1]):   # docs/ 디렉토리
+        return True
+    return segs[-1] in ("conf.py", "setup.py", "hatch_build.py", "noxfile.py")  # sphinx/패키징(tasks.py는 쿼리 가능성 있어 제외 안 함)
+
+
 def read_baseline(state_file: str) -> str:
     if not os.path.isfile(state_file):
         return ""
@@ -205,9 +213,13 @@ def main() -> int:
     changed: list[str] = []
     if mode == "all":
         rc, out = git("ls-files", *files)
+        skip_noise = not files                        # 파일/도메인 명시가 없는 전체 스캔에서만 테스트/문서 자동 제외(M3)
         for f in out.splitlines():
-            if f and classify(f) != "other":         # 쿼리 무관 제외
-                changed.append(f)
+            if not f or classify(f) == "other":       # 쿼리 무관 제외
+                continue
+            if skip_noise and (is_test_path(f) or is_doc_or_build_path(f)):
+                continue
+            changed.append(f)
     else:
         diffsel = ["--cached"] if mode == "staged" else [RANGE]
         gitargs = ["diff", "--name-only", "--diff-filter=d"] + diffsel   # d=삭제 제외(Read 실패 방지, B4)

@@ -129,7 +129,11 @@ def emit(result, as_json):
         print(f"새 버전 있음: 로컬 {result.get('local_version')} → 원격 {result.get('remote_version')} (방식: {m})")
         print("권장 조치:", result.get("action"))
     else:
-        print(f"최신입니다(로컬 {result.get('local_version')}, 방식: {m}).")
+        lv = result.get("local_version"); rv = result.get("remote_version")
+        if rv and parse_semver(lv) > parse_semver(rv):
+            print(f"로컬이 원격보다 최신(개발 빌드): 로컬 {lv} > 원격 {rv} (방식: {m}).")
+        else:
+            print(f"최신입니다(로컬 {lv}, 방식: {m}).")
 
 
 def main() -> int:
