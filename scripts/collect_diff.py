@@ -80,13 +80,15 @@ def classify(f: str) -> str:
         return "sql"
     if lower.endswith((".kt", ".kts", ".java", ".scala", ".groovy", ".py")):
         return "source"                             # JVM + Python(Django/SQLAlchemy). Node(.js/.ts)는 이후
+    if lower.endswith((".html", ".htm", ".jinja", ".jinja2", ".j2")):
+        return "template"                           # 서버 템플릿(Django/Jinja2/Thymeleaf) - 관계 접근 N+1 점검(서버 렌더링 스택에서만)
     if (lower.endswith((".yml", ".yaml", ".properties", ".conf", ".gradle", ".toml"))
             or lower.endswith(".gradle.kts") or posixpath.basename(lower) == "pom.xml"):
         return "config"
     return "other"
 
 
-_REL = {"mybatis-xml": 3, "sql": 3, "migration-sql": 3, "source": 2, "config": 1}
+_REL = {"mybatis-xml": 3, "sql": 3, "migration-sql": 3, "source": 2, "template": 1, "config": 1}
 
 
 def relevance(t: str) -> int:

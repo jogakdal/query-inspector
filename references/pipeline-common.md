@@ -59,7 +59,7 @@ python3 ${CLAUDE_PLUGIN_ROOT}/scripts/collect_diff.py --count-only  # 규모만(
 python3 ${CLAUDE_PLUGIN_ROOT}/scripts/collect_diff.py --continue    # 점진 스캔 재개: 다음 도메인
 ```
 
-- 출력은 파일 유형별 분류: `source` / `mybatis-xml` / `migration-sql` / `sql` / `config` / `other`. **쿼리 무관 변경(`other`: 문서/정적 리소스 등)과 삭제된 파일은 조기 제외**(전체/diff 모드 공통).
+- 출력은 파일 유형별 분류: `source` / `mybatis-xml` / `migration-sql` / `sql` / `config` / `template` / `other`. **쿼리 무관 변경(`other`: 문서/정적 리소스 등)과 삭제된 파일은 조기 제외**(전체/diff 모드 공통). `template`(`.html`/`.jinja`)은 서버 렌더링 스택에서만 점검 대상이다(아래 Stage 1).
 - 증분이 누락 없이 동작하려면 상태가 정확해야 한다(Stage 4에서 저장). `--all`이면 전체 재검토.
 - diff만으로 ORM 시그니처/엔티티 매핑/MyBatis `resultMap`을 알 수 없으므로 **관련 파일은 전체를 Read**한다. 전체 모드는 diff가 없으니 목록의 각 파일을 Read해 쿼리 지점을 찾는다.
 
@@ -90,7 +90,7 @@ python3 ${CLAUDE_PLUGIN_ROOT}/scripts/collect_diff.py --continue    # 점진 스
 - Spring Data JPA/Kotlin JDSL(`com.linecorp.kotlinjdsl`)/QueryDSL이 `build.gradle(.kts)`/`pom.xml`에서 감지되면 별도 설정 없이 추론(패턴은 `jpa.md`).
 - **python-django(의존 감지 시 자동 활성):** `manage.py`/`settings.py`(`INSTALLED_APPS`/`DATABASES`)/`pyproject.toml`/`requirements*.txt`에서 `django` 의존이 감지되면, **JPA와 동일 원칙으로 별도 설정 없이** `stacks`에 `python-django`를 추가해 분석한다(규칙은 `python-django.md`). Django 미사용 프로젝트엔 대상이 없어 자연히 건너뜀.
 - **python-sqlalchemy(의존 감지 시 자동 활성):** `pyproject.toml`/`requirements*.txt`에서 `sqlalchemy`(또는 `alembic`)가 감지되면, **별도 설정 없이** `stacks`에 `python-sqlalchemy`를 추가해 분석한다(규칙은 `python-sqlalchemy.md`). SQLAlchemy 미사용 프로젝트엔 대상이 없어 자연히 건너뜀.
-- **템플릿(python-django 활성 시):** Django 템플릿(`templates/**/*.html`)의 관계 접근(`{{ obj.rel.field }}`, `{% for %}` 루프 내 역참조, 커스텀 태그/필터)은 N+1 원천이다(`python-django.md`). 단 `collect_diff.py`는 `.html`을 `other`로 분류해 수집하지 않으므로, python-django가 활성이면 대상 범위의 템플릿을 **별도로 점검**하고 뷰/컨텍스트의 `select_related`/`prefetch_related` 누락과 교차한다.
+- **템플릿(서버 렌더링 스택):** 서버 템플릿(Django 템플릿 / **Jinja2(Flask)** / Thymeleaf 등)의 관계 접근(`{{ obj.rel.field }}`, 루프 내 역참조, 커스텀 태그/필터/매크로)은 N+1 원천이다. `collect_diff.py`가 `.html`/`.jinja`를 **`template` 유형으로 수집**하므로, 서버 렌더링 스택(python-django / python-sqlalchemy+Flask / jpa+Thymeleaf)이 활성이면 대상 범위의 템플릿을 점검하고 뷰/컨텍스트의 eager 로딩(`select_related`/`prefetch_related`/`joinedload`/`selectinload`) 누락과 교차한다. 서버 템플릿을 쓰지 않는 스택(순수 API 등)이면 `template`은 건너뛴다.
 - **트레이드오프(설계):** 방언 판정/스키마 인벤토리/쿼리 추출은 스크립트가 아니라 **LLM이 파일을 읽어 수행**한다(`collect_diff.py`만 스크립트). 대형 프로젝트에선 `--count-only`로 규모를 먼저 파악하고 **점진 배치**(도메인 단위)로 처리량을 통제한다.
 
 ## Stage 2 - 예상 쿼리 재구성 (필요 시)
