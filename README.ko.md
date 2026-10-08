@@ -75,6 +75,8 @@ claude plugin install query-inspector@query-inspector-marketplace
   - clone/포크한 체크아웃을 마켓플레이스로 등록해 거기서 설치합니다 - 오프라인이나 수정판을 네트워크 없이 돌릴 때 씁니다.
   - 스킬 복사 설치는 없습니다: 두 스킬이 `/query-inspector:` 네임스페이스 아래에서 자산을 공유하며, 이 구조는 트리를 플러그인으로 로드할 때만 해석됩니다.
 
+**기존 설치 업데이트.** `claude plugin update query-inspector@query-inspector-marketplace`를 실행한 뒤 Claude Code를 재시작하거나 `/reload-plugins`로 적용합니다. 마켓플레이스에서 HTTPS로 최신본을 받으므로 SSH 키가 없어도 됩니다. **자동 업데이트는 이 마켓플레이스에서 기본 꺼짐**(비공식 마켓플레이스는 모두 동일)이라, 켜지 않으면 새 버전이 자동으로 당겨지지 않습니다 - 자동 수신을 원하면 `/plugin` → Marketplaces → `query-inspector-marketplace`에서 켜세요.
+
 전체 설치 안내(방식 비교/수동 설치): **[INSTALL.ko.md](./INSTALL.ko.md)** <br>
 사용/설정/문제 해결: 개요 **[MANUAL.ko.md](./MANUAL.ko.md)** 또는 위 스킬별 매뉴얼
 

@@ -75,6 +75,8 @@ After install, invoke in a new session with `/query-inspector:tuning-report` or 
   - Registers your cloned/forked checkout as the marketplace and installs from it - for offline or modified builds, no network.
   - There is no skill-copy install: the two skills share assets under the `/query-inspector:` namespace, which only resolves when the tree is loaded as a plugin.
 
+**Updating an existing install.** Run `claude plugin update query-inspector@query-inspector-marketplace`, then restart Claude Code or run `/reload-plugins` to apply. This fetches the latest from the marketplace over HTTPS (no SSH key needed). **Auto-update is off by default** for this marketplace (as for any non-official one), so a new version is not pulled automatically unless you opt in — enable it in `/plugin` → Marketplaces → `query-inspector-marketplace`.
+
 Full install guide (method comparison, manual install): **[INSTALL.md](./INSTALL.md)** <br>
 Usage, config, troubleshooting: overview **[MANUAL.md](./MANUAL.md)** or the per-skill manuals above.
 
