@@ -26,9 +26,12 @@ Django ORM이 **생성할 SQL을 추론**한다. QuerySet 체인과 관계 접�
 | `__in=[...]` | `IN (...)` -> 크기 무제한이면 `large_in_clause` |
 | `__range=(a,b)` | `BETWEEN ? AND ?` |
 | `__isnull=True` | `IS NULL` |
-| `__startswith` | `LIKE 'x%'` |
-| `__contains`/`__endswith` | `LIKE '%x'`/`'%x%'` -> **선행 `%`** -> `leading_wildcard_like` |
-| `__icontains`/`__iexact` | `UPPER(col) LIKE UPPER(?)` -> `non_sargable_predicate` |
+| `__startswith` | `LIKE 'x%'`(후행 `%`) -> PostgreSQL은 `varchar_pattern_ops` 인덱스라야 커버 |
+| `__endswith` | `LIKE '%x'` -> **선행 `%`** -> `leading_wildcard_like` |
+| `__contains` | `LIKE '%x%'` -> **선행 `%`** -> `leading_wildcard_like` |
+| `__iexact` | PostgreSQL: `UPPER(col::text) = UPPER(?)`(**등호**, LIKE 아님) / MySQL: 대소문자 무시 콜레이션이면 `col = ?` -> 처방은 `UPPER()` 표현식 인덱스(LIKE 아님) |
+| `__istartswith` | `UPPER(col::text) LIKE UPPER('x%')`(후행 `%`) -> `UPPER()` + `text_pattern_ops`/표현식 인덱스 |
+| `__icontains` | `UPPER(col::text) LIKE UPPER('%x%')`(**선행 `%`**) -> `leading_wildcard_like` + `non_sargable_predicate` -> 처방은 pg_trgm GIN |
 | `관계__field`(예: `user__name`) | 상위 테이블 **JOIN** 후 `WHERE user.name = ?` |
 | `fk_id=` / `fk=obj` | **FK 컬럼 직접** `WHERE user_id = ?`(조인 없음) |
 | `.order_by('f', '-f')` | `ORDER BY f ASC/DESC` -> Tier2 `order_by_filesort`/`missing_index` |
@@ -41,6 +44,7 @@ Django ORM이 **생성할 SQL을 추론**한다. QuerySet 체인과 관계 접�
 | `.raw("SQL")` | 원본 SQL 그대로 -> `native-sql` 규칙 적용(라벨 `EXACT`) |
 | `.extra(...)` | 부분 raw 삽입 - SQL 인젝션/방언 이질 주의 |
 
+- **대소문자 무시 룩업(`__iexact`/`__istartswith`/`__icontains`)의 실제 SQL과 인덱스 처방은 백엔드마다 다르다**(위 표는 PostgreSQL 기준). `__iexact`는 등호라 LIKE 패턴 인덱스가 아니라 `UPPER()` 표현식 B-Tree로, `__istartswith`는 `text_pattern_ops`로, `__icontains`는 pg_trgm GIN으로 커버한다 - 방언별 규칙은 `references/dialects/postgresql.md`.
 - **관계 룩업 vs FK 직접(중요):** `filter(user__name=...)`는 상위 테이블 **JOIN**을 만들고, `filter(user_id=...)`/`filter(user=obj)`는 자식의 **FK 컬럼 직접 접근**(조인 없음)이다. 접근 컬럼/인덱스 대조 시 이를 구분한다.
 - 예: `Order.objects.filter(status='paid').order_by('-created_at')`
   -> `SELECT ... FROM orders WHERE status = ? ORDER BY created_at DESC`
@@ -65,15 +69,34 @@ Django ORM이 **생성할 SQL을 추론**한다. QuerySet 체인과 관계 접�
 - **`.all()` 후 파이썬 필터**: `[o for o in qs.all() if o.status=='x']`처럼 DB에서 거르지 않고 전건 로딩 후 파이썬에서 필터 -> 과다 로딩(`.filter()` 권장).
 - **`len(qs)` vs `.count()`**: 개수만 필요한데 `len(queryset)`을 쓰면 전건 로딩. `.count()`로.
 - **DRF/템플릿**: 시리얼라이저 필드나 템플릿의 `{{ obj.user.name }}`이 뷰에 안 보여도 N+1을 만든다. 뷰의 `get_queryset`에 `select_related`/`prefetch_related`가 있는지 함께 본다.
+- **N+1 원천은 QuerySet 밖에도 많다:** 모델 property/메서드/`__str__`(폼 선택지 라벨·admin `list_display`에서 발현), 템플릿 태그/필터/context processor, inline formset, 미들웨어·layout include(매 요청 경로), 시그널 수신기, admin `list_select_related` 누락, 검색 결과 래퍼(haystack `SearchResult.object`의 `load_all` 누락)·검색 색인 `prepare_*`, 루프 안 `full_clean()`. 뷰 코드에 안 보여도 추적한다.
+- **해소 판정 함정(해소된 듯 보이나 아닌 경우):**
+  - `prefetch_related` 후 **다시 필터/정렬하면 캐시가 무효화**되어 쿼리가 다시 나간다. `Prefetch(..., to_attr=)`로 담았으면 접근 경로(`obj.attr`)가 정확히 일치해야 한다.
+  - `select_related`로 받은 객체를 **proxy 모델로 재생성**하면 캐시가 소실된다.
+  - **인자 없는 `select_related()`**는 nullable FK를 제외한다(명시 인자 권장).
+  - 접근 경로와 `select_related`/`prefetch_related` 경로가 **철자까지 일치**해야 한다(`user__profile` vs `user`).
+  - 역참조 OneToOne은 `select_related`로 해소되지만, 역참조 FK/M2M은 `prefetch_related`가 필요하다.
+
+## 행 곱셈 / 조인 팬아웃 (`cartesian_join`)
+
+다중값 관계가 얽히면 조인이 행을 부풀려 집계가 틀리거나 비용이 폭증한다.
+
+- `annotate(Count('rel'))` 뒤 `filter(rel__...)`는 **이중 조인**으로 집계가 부풀 수 있다(별도 `Subquery`로 분리).
+- 다중값 관계 OR(`Q(a__x) | Q(b__y)`)는 LEFT JOIN **팬아웃**으로 중복 행을 만든다.
+- 다중값 관계 정렬 + `distinct()`는 중복 행을 남긴다(`distinct_abuse`와 교차 판정).
+- `alias()` 집계는 GROUP BY가 잔존할 수 있다.
+- `distinct().count()`는 전 컬럼 DISTINCT 서브쿼리가 된다(비용 큼).
+- 여러 다중값 `annotate`를 한 쿼리에 겹치면 행 수가 곱으로 늘어난다 -> 집계를 분리한다.
 
 ## Tier2 인덱스 대조 연계
 
 WHERE/JOIN/ORDER BY 컬럼을 스키마와 대조한다. 규칙/판정은 `references/tier2-index-matching.md`.
 
 - **인덱스 소스(모델)**: 필드 `db_index=True`, `unique=True`, `class Meta`의 `indexes=[models.Index(fields=[...])]`/`constraints`/`unique_together`.
-- **`Meta.ordering`(암묵 정렬):** 모델 `class Meta`에 `ordering`이 있으면 명시적 `.order_by()`가 없어도 모든 조회에 암묵 `ORDER BY`가 붙는다 - 그 정렬 컬럼도 `order_by_filesort`/인덱스 대조 대상이다.
+- **암묵 인덱스/제약(오탐 방지):** `SlugField`는 기본 `db_index=True`. `unique=True`와 `db_index=True`를 함께 줘도 인덱스는 **1개**만 생긴다. `OneToOneField`는 UNIQUE(=인덱스), PK는 자동 인덱스, `ManyToManyField`는 자동 중간 테이블(양쪽 FK 인덱스). PostgreSQL에서 `LIKE 'x%'`/`__startswith` 커버는 `varchar_pattern_ops` 보조 인덱스가 따로 있어야 한다. 이들을 '인덱스 없음'으로 오판하지 말 것.
+- **`Meta.ordering`(암묵 정렬):** 모델 `class Meta.ordering`이 있으면 명시 `.order_by()`가 없어도 모든 조회에 암묵 `ORDER BY`가 붙는다(그 컬럼도 `order_by_filesort`/인덱스 대조 대상). 단 **`count()`/`exists()`/`aggregate()`/`get()`에는 적용되지 않고**, `Subquery` 안에서는 유지된다. 관계 필드 정렬(`ordering=['user__name']`)은 JOIN을 확장한다. `get_latest_by`도 정렬 기준이다.
 - **FK 자동 인덱스(중요, 오탐 방지):** Django는 `ForeignKey`/`OneToOneField`에 **기본으로 인덱스를 생성**한다(`db_index=True`가 기본). 따라서 JVM처럼 "FK에 인덱스 없음"을 단정하지 말 것 - **`db_index=False`로 명시했거나, 복합 인덱스의 선행 컬럼이 아닌 경우**에만 `missing_index`로 본다. (단 일부 DB/구성에서 자동 인덱스가 없을 수 있으니 확정이 어려우면 `--db` 실 DB 조회 권장.)
-- **마이그레이션 델타**: 같은 변경분의 `migrations/*.py`에 `AddIndex`가 있으면 "이번 배포로 생기는 인덱스", 없으면 "이번 변경이 요구하는 인덱스가 빠졌는지" 판정.
+- **마이그레이션 델타(인덱스에 영향 주는 연산):** `AddIndex`/`RemoveIndex` 외에 `AddField`(+`db_index`/`unique`), `AlterField`(이전 state와 차분 필요), `AlterUniqueTogether`/`AlterIndexTogether`, `RemoveField`, `RunSQL`/`RunPython`(수동 DDL - 벤더 조건부일 수 있음), `SeparateDatabaseAndState`(물리 != 논리 state), `AlterModelTable`, `managed=False`(Django가 테이블/인덱스를 관리하지 않음)를 본다. 적용 순서는 `dependencies` DAG와 `replaces`(스쿼시)를 따른다. 같은 변경분의 `AddIndex`가 '이번 배포로 생기는 인덱스', 없으면 '이번 변경이 요구하는 인덱스가 빠졌는지' 판정.
 - **신뢰 순위**: 실DB(`--db`) > 마이그레이션 > 모델 선언. 모델 `Meta.indexes`만 믿고 "커버됨"으로 단정하지 말고, 마이그레이션 누락 가능성을 "확인 필요"로 남긴다.
 
 ## 동적 쿼리 전개

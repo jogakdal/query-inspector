@@ -62,18 +62,20 @@ SKILL.md 절차가 이 템플릿의 {{...}} 자리를 채워 두 곳에 출력�
 
 ## 상세
 
-<!-- 이슈마다 아래 블록을 반복. 심각도 내림차순. -->
+<!-- 이슈마다 아래 블록을 반복. 심각도 내림차순. 대규모 리포트(수십 건+)에서는 ⚪ info 항목을 전체 블록 대신 한 줄(ID/위치/한 줄 근거)로 묶어 축약할 수 있다 - 🔴 critical / 🟡 warn은 전체 블록을 유지한다. -->
 ### {{severity_icon}} [{{severity}}] {{issue_name}} - {{location}}  ({{confidence_label}})
 
 - **ID:** `{{heuristic_id}}`
 - **심각도:** {{severity}}{{severity_adjust}}   <!-- 맥락상 조정했으면: "🟡 warn (기본 🔴 critical -> 조정 사유: 결과 소량 보장/배치 1회성 등)". 조정 없으면 기본값만. -->
 - **원천:** `{{source_ref}}` - {{source_snippet}}
+- **수정 지점:** {{fix_site}}   <!-- 발현 위치(원천)와 다를 때만 채운다. 예: 템플릿에서 N+1이 발현하고 수정은 뷰 get_queryset. 여러 조회가 공유하는 인덱스면 '관련 위치'를 함께 적는다 -->
 - **최종 수정자:** {{last_author}}   <!-- git blame(blame_author.py) 기준. 예: "Yongho Hwang(황용호) (2026-08-27)". 미커밋/새 파일이면 "미커밋(작업 중)". git 정보 없으면 이 줄 생략. 이메일은 기본 생략 -->
 - **추론 SQL** ({{confidence_label}}):
   ```sql
   {{inferred_sql}}
   ```
 - **근거:** {{rationale}}
+- **검증 수준:** {{verification_level}}   <!-- 신뢰도 라벨과 별개로, 실제 어디까지 확인했는지: '컴파일 확인(str(qs.query))' / '쿼리 수 실측(N쿼리)' / 'EXPLAIN 실측' / '정적 추론(미실행)'. 라벨(EXACT/INFERRED/AMBIGUOUS)은 SQL 생성 주체를, 이 필드는 검증 여부를 나타낸다 -->
 - **제안:** {{suggestion}}
   ```{{suggestion_lang}}
   {{suggestion_code}}
@@ -95,4 +97,4 @@ SKILL.md 절차가 이 템플릿의 {{...}} 자리를 채워 두 곳에 출력�
 - **AMBIGUOUS 항목:** 동적 분기가 많아 대표 시나리오로 근사했습니다. 실제 SQL은 위 검증 방법으로 확인하세요.
 - 이 리포트는 **변경분({{range}})** 만 대상으로 합니다. 변경되지 않은 기존 쿼리는 검토 범위 밖입니다.
 
-<!-- 심각(critical) 이슈가 있으면 SKILL.md가 종료 신호를 남겨 훅/CI가 감지할 수 있게 한다(선택). -->
+<!-- 심각(critical) 이슈가 있으면 SKILL.md가 터미널 요약 끝에 `[query-inspector] critical=<N>`를 출력한다(훅/CI가 grep으로 감지하는 선택 신호). -->

@@ -74,6 +74,11 @@ severity_rules:
   or_predicate_index: info
   count_large: info
   transaction_lock_scope: info
+  write_in_loop: warn             # 루프 내 행별 save/create — bulk 권장
+  lost_update: warn               # 읽기-수정-쓰기 경쟁 — F() 원자 갱신/행 잠금(정확성)
+  duplicate_query: info           # 요청 내 동일 쿼리 반복 — 메모이제이션
+  stale_queryset_cache: warn      # 모듈/클래스 레벨 QuerySet 평가 캐시
+  query_correctness: critical     # 결과가 틀리는 쿼리(잘못된 바인드/집계 팬아웃) — 정확성
   # 여기 나열되지 않은 ID는 references/heuristics.md의 각 항목 기본 심각도를 따른다.
 
 # ---------------------------------------------------------------------------
