@@ -36,6 +36,9 @@ check ".py migrations/__init__.py -> source"  "python3 -c 'import sys; sys.path.
 check "루트 migrations/*.py -> migration-sql (B9)" "python3 -c 'import sys; sys.path.insert(0,\"$SKILL/scripts\"); from collect_diff import classify; assert classify(\"migrations/0001_initial.py\")==\"migration-sql\"'"
 check "is_test_path: Python tests/·test/ 제외, 소스 유지 (B2)" "python3 -c 'import sys; sys.path.insert(0,\"$SKILL/scripts\"); from collect_diff import is_test_path as t; assert t(\"app/tests/test_x.py\") and t(\"src/oscar/test/x.py\") and t(\"a/test_foo.py\") and not t(\"app/views.py\")'"
 
+check ".html/.jinja -> template (H2)" "python3 -c 'import sys; sys.path.insert(0,\"$SKILL/scripts\"); from collect_diff import classify; assert classify(\"flaskbb/templates/forum/row.html\")==\"template\" and classify(\"t/x.jinja2\")==\"template\"'"
+check "is_doc_or_build_path: docs/·setup.py 제외, tasks.py 유지 (M3)" "python3 -c 'import sys; sys.path.insert(0,\"$SKILL/scripts\"); from collect_diff import is_doc_or_build_path as d; assert d(\"docs/conf.py\") and d(\"setup.py\") and d(\"hatch_build.py\") and not d(\"flaskbb/tasks.py\")'"
+
 echo "== 3) 골든 기대 파일 존재/형식 =="
 have_yaml=0; python3 -c 'import yaml' 2>/dev/null && have_yaml=1
 for f in sample-project jpa-sample django-sample sqlalchemy-sample; do
