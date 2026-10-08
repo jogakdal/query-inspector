@@ -45,6 +45,11 @@
 
 **Python**: Django `settings.py`의 `DATABASES['default']['ENGINE']`(`django.db.backends.postgresql` -> `postgresql`, `.mysql` -> `mysql`, `.oracle` -> `oracle`, `.sqlite3` -> 개발용), SQLAlchemy 접속 URL 스킴(`postgresql://`/`postgresql+psycopg://` -> `postgresql`, `mysql://`/`mysql+pymysql://` -> `mysql`, `oracle://` -> `oracle`).
 
+**Python 멀티 DB 프로젝트(중요):** 라이브러리/프레임워크 앱은 optional extras로 여러 드라이버를 **동시에** 선언하는 경우가 많다(`pyproject.toml`의 `[project.optional-dependencies]`에 `postgres`/`mysql` 공존, 기본 설정은 `sqlite`). 드라이버 존재만으로는 결정할 수 없으므로 **운영 구성을 우선**해 판정한다:
+1. **운영 배포 구성** - `docker-compose*.yaml`의 서비스 이미지(`postgres:18-alpine`)와 `DATABASE_URL`/`DATABASE_URI` 환경변수, `config.cfg.template`/`.env.example`의 접속 URL 스킴.
+2. **방언 전용 코드** - PostgreSQL FTS(`tsvector`/`search_vector`/GIN), 특정 방언에만 쓰이는 마이그레이션/함수.
+3. 그래도 불명확하면 기본 설정값(흔히 `sqlite`)이 아니라 **production에 가장 가까운 구성**을 택하고, 멀티 DB임을 리포트에 명시한다. 방언 의존 판정(FK 자동 인덱스 등)은 그 방언 기준으로 하되 다른 배포 타깃의 차이를 부기한다(예: "MySQL/InnoDB 배포면 FK 단일 인덱스가 자동 생성되어 일부 `missing_index`가 완화됨").
+
 ### 3. Hibernate / JPA dialect 설정
 `spring.jpa.database-platform` 또는 `hibernate.dialect` 값.
 
