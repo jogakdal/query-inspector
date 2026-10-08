@@ -68,13 +68,14 @@ def classify(f: str) -> str:
         if rc == 0 and _XML_RE.search(content):
             return "mybatis-xml"
         return "config"
+    _segs = lower.split("/")
     if (("/migration/" in lower and lower.endswith(".sql"))
             or "/db/changelog/" in lower
             or ("changelog" in lower and lower.endswith(".sql"))
             or "flyway" in lower or "liquibase" in lower
-            or ("/migrations/" in lower and lower.endswith(".py") and not lower.endswith("__init__.py"))
-            or ("/versions/" in lower and lower.endswith(".py") and not lower.endswith("__init__.py"))):
-        return "migration-sql"                      # Flyway/Liquibase(.sql) + Django(migrations/*.py)/Alembic(versions/*.py)
+            or (lower.endswith(".py") and not lower.endswith("__init__.py")
+                and any(seg in ("migrations", "versions") for seg in _segs[:-1]))):
+        return "migration-sql"                      # Flyway/Liquibase(.sql) + Django(migrations/*.py)/Alembic(versions/*.py). 루트 migrations/도 포함
     if lower.endswith(".sql"):
         return "sql"
     if lower.endswith((".kt", ".kts", ".java", ".scala", ".groovy", ".py")):
@@ -93,7 +94,17 @@ def relevance(t: str) -> int:
 
 
 def is_test_path(f: str) -> bool:
-    return "/src/test/" in f                         # 테스트 소스는 우선순위 최하(프로덕션 아님)
+    """테스트 소스 판정(저장소 상대경로 기준, JVM + Python). 우선순위 최하/제외 대상."""
+    p = f.lower()
+    segs = p.split("/")
+    if "src/test/" in p:                             # JVM(Maven/Gradle 표준 레이아웃)
+        return True
+    if any(seg in ("test", "tests") for seg in segs[:-1]):   # test/tests 디렉토리(예: tests/, src/<app>/test/)
+        return True
+    base = segs[-1]                                  # Python 테스트 파일 네이밍
+    if base.startswith("test_") or base.endswith("_test.py") or base == "conftest.py":
+        return True
+    return False
 
 
 def read_baseline(state_file: str) -> str:
@@ -145,6 +156,7 @@ def main() -> int:
         return 3
 
     files = list(args.files)
+    display_files = list(files)                      # 사용자 표시용(:(glob) 매직 가공 전 원본)
     RANGE = args.range or ""
     if args.range:
         mode = "range"
@@ -160,12 +172,18 @@ def main() -> int:
     if args.cont:
         name, globs = read_next_domain(args.state)
         if globs:
-            files = globs
+            display_files = list(globs)
+            files = [f":(glob){g}" for g in globs]   # glob 매직: **/ 가 '/'를 넘어가게 명시(B3)
             mode = "all"
             effective_label = f"재개(점진 전체 스캔) — 다음 도메인: {name or '?'} (globs: {' '.join(globs)})"
         else:
             mode = "all"
             effective_label = "재개할 scan_progress가 없음 → 전체(범위 확인 권장)"
+
+    # --- --files 명시(range/staged/continue 아님) → baseline 무관하게 지정 파일 전체 대상(B1) ---
+    if files and mode == "since-last" and not args.cont:
+        mode = "all"
+        effective_label = f"파일 한정({len(display_files)}개) — baseline 무관 전체 대상"
 
     # --- since-last 해석: baseline 유효 → incremental, 아니면 → all ---
     if mode == "since-last":
@@ -190,12 +208,12 @@ def main() -> int:
                 changed.append(f)
     else:
         diffsel = ["--cached"] if mode == "staged" else [RANGE]
-        gitargs = ["diff", "--name-only"] + diffsel
+        gitargs = ["diff", "--name-only", "--diff-filter=d"] + diffsel   # d=삭제 제외(Read 실패 방지, B4)
         if files:
             gitargs += ["--"] + files
         rc, out = git(*gitargs)
         for f in out.splitlines():
-            if f:
+            if f and classify(f) != "other":          # 쿼리 무관 제외(diff 모드에도 적용, B4)
                 changed.append(f)
         if mode == "incremental":
             # git diff는 tracked만 보므로, 마지막 튜닝 이후 새로 생긴 미추적 파일을 합친다
@@ -208,11 +226,11 @@ def main() -> int:
     print("=== query-inspector : Stage 0 대상 수집 ===")
     if args.cont:
         print(f"범위: {effective_label}")
-        if files:
-            print(f"대상 도메인 경로: {' '.join(files)}")
-    elif files:
-        print(f"범위: 파일 한정 ({len(files)}개 지정 — 전체 스캔 아님)")
-        print(f"파일: {' '.join(files)}")
+        if display_files:
+            print(f"대상 도메인 경로: {' '.join(display_files)}")
+    elif display_files:
+        print(f"범위: {effective_label or ('파일 한정 (' + str(len(display_files)) + '개 지정)')}")
+        print(f"파일: {' '.join(display_files)}")
     else:
         if mode == "incremental":
             print(f"범위: {effective_label or '증분'}")
@@ -278,9 +296,11 @@ def main() -> int:
             print("(증분: 새로 생긴 미추적 파일은 diff에 없으니 위 목록의 해당 파일을 Read 하세요.)")
         print()
         diffsel = ["--cached"] if mode == "staged" else [RANGE]
-        gitargs = ["diff"] + diffsel
-        if files:
-            gitargs += ["--"] + files
+        gitargs = ["diff", "--diff-filter=d"] + diffsel
+        # 본문 diff를 수집 대상(쿼리 관련 · 삭제 제외)으로 한정 — 비쿼리 노이즈 제거(B4)
+        targets = files if files else changed
+        if targets:
+            gitargs += ["--"] + targets
         sys.stdout.write(git(*gitargs)[1])
     return 0
 

@@ -20,6 +20,7 @@ from __future__ import annotations
 import argparse
 import datetime
 import json
+import os
 import re
 import subprocess
 import sys
@@ -47,24 +48,21 @@ def local_user():
     return out.strip() if rc == 0 and out.strip() else None
 
 
-def blame_lines(path, lines):
-    """{line: {author, mail, date, committed, commit}} 반환. 실패 라인은 미커밋으로."""
-    result = {}
-    if not lines:
-        return result
-    args = ["blame", "--porcelain"]
-    for n in lines:
-        args += ["-L", f"{n},{n}"]
-    args += ["--", path]
-    rc, out, _err = git(*args)
-    if rc != 0:
-        # 미추적/새 파일 등 → 미커밋으로 간주(현재 작업자 추정)
-        user = local_user()
-        for n in lines:
-            result[n] = {"author": user, "mail": None, "date": None,
-                         "committed": False, "commit": None}
-        return result
+def _ignore_revs_args():
+    """저장소에 .git-blame-ignore-revs가 있으면 --ignore-revs-file 인자를 준다(B6).
 
+    일괄 포맷/린트 커밋(black 등)에 귀속되는 것을 막아 실제 작성자를 되살린다.
+    """
+    rc, top, _ = git("rev-parse", "--show-toplevel")
+    if rc != 0 or not top.strip():
+        return []
+    irf = os.path.join(top.strip(), ".git-blame-ignore-revs")
+    return ["--ignore-revs-file", irf] if os.path.isfile(irf) else []
+
+
+def _parse_blame(out):
+    """git blame --porcelain 출력 → {final_line: info}. 단일/다중 라인 공용."""
+    result = {}
     commits = {}          # sha -> {author, mail, time}
     cur = None
     final_line = None
@@ -99,9 +97,47 @@ def blame_lines(path, lines):
             result[final_line] = {"author": author, "mail": info.get("mail"),
                                   "date": date, "committed": committed, "commit": cur}
             cur = None
-    # blame이 못 준 라인은 미커밋 처리
+    return result
+
+
+def _blame_once(path, lines, ignore_args):
+    args = ["blame", "--porcelain"] + ignore_args
     for n in lines:
-        result.setdefault(n, {"author": local_user(), "mail": None, "date": None,
+        args += ["-L", f"{n},{n}"]
+    args += ["--", path]
+    return git(*args)
+
+
+def blame_lines(path, lines):
+    """{line: {author, mail, date, committed, commit}} 반환.
+
+    - .git-blame-ignore-revs 자동 적용(B6). ignore-revs-file의 불량 sha로 실패하면 ignore 없이 폴백.
+    - 일괄 blame이 실패하면(범위 밖 라인 1개 등) 라인별로 재시도해, 한 라인의 오류가
+      나머지 전체를 '미커밋 + 실행자'로 오귀속시키지 않게 한다(B5).
+    """
+    result = {}
+    if not lines:
+        return result
+    ignore_args = _ignore_revs_args()
+
+    def run(ls):
+        rc, out, _ = _blame_once(path, ls, ignore_args)
+        if rc != 0 and ignore_args:                   # 불량 ignore-revs-file 등 → ignore 없이 1회 폴백
+            rc, out, _ = _blame_once(path, ls, [])
+        return rc, out
+
+    rc, out = run(lines)
+    if rc == 0:
+        result = _parse_blame(out)
+    else:
+        for n in lines:                               # 일괄 실패 → 라인별 개별 시도(B5)
+            rcn, outn = run([n])
+            if rcn == 0:
+                result.update(_parse_blame(outn))
+    # blame이 못 준 라인은 미커밋 처리(미추적/새 파일/범위 밖 → 현재 작업자 추정)
+    user = local_user()
+    for n in lines:
+        result.setdefault(n, {"author": user, "mail": None, "date": None,
                               "committed": False, "commit": None})
     return result
 
