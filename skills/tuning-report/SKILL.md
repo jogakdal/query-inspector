@@ -62,12 +62,12 @@ allowed-tools: Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/collect_diff.py *), Ba
    - **입력/추출한 자격증명은 리포트/상태/로그에 남기지 않는다**(호스트/DB명만, 비번 마스킹).
 1. `scripts/db_guard.py`로 프로파일 검증. **미통과 시 즉시 중단**하고 Tier2 강등.
    ```bash
-   python3 "${CLAUDE_PLUGIN_ROOT}/scripts/db_guard.py" --profile <profile> --config .query-inspector.yml --sql-file <추출된_select.sql>
+   python3 ${CLAUDE_PLUGIN_ROOT}/scripts/db_guard.py --profile <profile> --config .query-inspector.yml --sql-file <추출된_select.sql>
    ```
    - 프로덕션 호스트/이름 패턴/`SELECT`/`EXPLAIN` 외 문장/denylist 매칭이면 차단.
 2. 통과한 SELECT만 `run_explain.py`로 `EXPLAIN`(비실행). **Stage 0.5 감지 방언을 반드시 `--dialect`로 전달**(미전달 시 기본 `mysql`이라 MariaDB에서 실패 가능).
    ```bash
-   python3 "${CLAUDE_PLUGIN_ROOT}/scripts/run_explain.py" --profile <profile> --config .query-inspector.yml --sql-file <추출된_select.sql> --dialect <mysql|mariadb|postgresql> [--source-config <application-local.yml 등>] [--analyze]
+   python3 ${CLAUDE_PLUGIN_ROOT}/scripts/run_explain.py --profile <profile> --config .query-inspector.yml --sql-file <추출된_select.sql> --dialect <mysql|mariadb|postgresql> [--source-config <application-local.yml 등>] [--analyze]
    ```
    - MySQL/MariaDB/PostgreSQL을 지원한다(감지 방언을 `--dialect`로 전달). 그 외(Oracle 등)는 Tier3 미구현(종료코드 3 -> Tier2 유지).
    - `EXPLAIN ANALYZE`(실제 실행)는 프로파일 `allow_explain_analyze: true` + 사용자 확인 + `--analyze`일 때만. 트랜잭션 열고 무조건 롤백.
@@ -92,17 +92,17 @@ allowed-tools: Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/collect_diff.py *), Ba
 1. **터미널 요약** - 위험도순 상위 `terminal_top_n`개(기본 10). `min_severity` 하한 적용.
 2. **상세 리포트 파일** - `report.dir`의 `tuning-reports/`(기본 `docs/query-inspector/tuning-reports/`) 아래 `<timestamp>.md`. 이력/캐시 겸용.
 
-리포트에는 반드시 포함: **사용한 스킬 버전**(헤더 - `version_check.py ... --local`로 확인), 대상 범위(증분/전체 + baseline)/파일/쿼리 수/라벨 분포, 사용된 깊이(및 강등 사유), 감지된 방언(및 근거), **이전 제안 검증**(상태가 있고 `--all`이 아닐 때만), **실행 계획(Action Items)**, 이슈별 원천/**최종 수정자**/근거/수정안/신뢰도. 심각(critical) 이슈가 있으면 종료 신호를 남겨 훅/CI가 감지할 수 있게 한다(선택).
+리포트에는 반드시 포함: **사용한 스킬 버전**(헤더 - `version_check.py ... --local`로 확인), 대상 범위(증분/전체 + baseline)/파일/쿼리 수/라벨 분포, 사용된 깊이(및 강등 사유), 감지된 방언(및 근거), **이전 제안 검증**(상태가 있고 `--all`이 아닐 때만), **실행 계획(Action Items)**, 이슈별 원천/**최종 수정자**/근거/수정안/신뢰도. 심각(critical) 이슈가 있으면 **터미널 요약 마지막 줄에 `[query-inspector] critical=<N>`를 출력**한다(훅/CI가 grep으로 감지하는 선택 신호 - 스킬은 프로세스 종료코드를 직접 제어하지 않으므로 이 텍스트 마커로 대신한다). N=0이면 생략.
 
 **최종 수정자** - 각 이슈 원천 `파일:라인`에 대해 `blame_author.py`(git blame)로 마지막 작성/수정자를 조회해 포함. 한 파일 여러 라인은 한 번에:
 ```bash
-python3 "${CLAUDE_PLUGIN_ROOT}/scripts/blame_author.py" --file <경로> --lines <n1,n2,...> --json   # Windows는 python 또는 py
+python3 ${CLAUDE_PLUGIN_ROOT}/scripts/blame_author.py --file <경로> --lines <n1,n2,...> --json   # Windows는 python 또는 py
 ```
 `author`(+`date`)를 "최종 수정자: 이름 (YYYY-MM-DD)"로, `committed:false`면 "미커밋(작업 중)". git 정보 없으면 생략(이메일 기본 생략).
 
 **실행 계획(Action Items)** - 요약 다음. 개발자나 **그 개발자의 AI 에이전트에게 그대로 전달해 착수**할 목록을 심각도 그룹(🔴 이번 배포 필수 / 🟡 곧 / ⚪ 여유)으로. 각 항목: `- [ ]` + 적용 라벨(`[자동적용]`/`[검토후]`/`[확인후]`) + `파일:라인` + 근거 이슈번호 + (가능하면) 복붙용 코드/DDL. 인덱스 추가처럼 안전한 건 `[자동적용]`으로 완성 DDL 제시. 이 목록은 "제안"이며 스킬이 자동 반영하지 않는다.
 
-**상태 저장** - 리포트 직후 `<report.dir>/state.json` 갱신(`references/state-and-followup.md`): `last_tuned_commit`=현재 HEAD(+dirty), `last_report`, `updated_at`, `open_suggestions`=미해결 + 새 발견(해결분 제거). **단 `--all`은 처음 실행처럼** 이전 것과 대조/누적하지 않고 이번 발견분으로 새로 기록. 기본 로컬(gitignore), `state.shared: true`면 커밋 대상. `--no-state`면 저장 안 함. **점진 스캔 중이면** `scan_progress`도 갱신(처리 도메인을 `domains_done`으로, 남은 게 없으면 제거 후 baseline 확정). **리포트/상태 커밋 방지:** `state.shared`가 false면 `report.dir`에 `.gitignore`(`*`)가 없으면 생성.
+**상태 저장** - 리포트 직후 `<report.dir>/tuning-reports/state.json` 갱신(`references/state-and-followup.md`, `collect_diff.py`의 기본 경로와 동일): `last_tuned_commit`=현재 HEAD(+dirty), `last_report`, `updated_at`, `open_suggestions`=미해결 + 새 발견(해결분 제거). **단 `--all`은 처음 실행처럼** 이전 것과 대조/누적하지 않고 이번 발견분으로 새로 기록. 기본 로컬(gitignore), `state.shared: true`면 커밋 대상. `--no-state`면 저장 안 함. **점진 스캔 중이면** `scan_progress`도 갱신(처리 도메인을 `domains_done`으로, 남은 게 없으면 제거 후 baseline 확정). **리포트/상태 커밋 방지:** `state.shared`가 false면 `report.dir`에 `.gitignore`(`*`)가 없으면 생성.
 
 ---
 

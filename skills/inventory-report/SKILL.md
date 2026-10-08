@@ -52,7 +52,7 @@ allowed-tools: Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/collect_diff.py *), Ba
 - **원천** - `파일:라인`(+ 메서드/매퍼 id), **어댑터**, **신뢰도 라벨**(`EXACT`/`INFERRED`/`AMBIGUOUS`).
 - **최종 수정자** - 원천 `파일:라인`을 마지막으로 작성/수정한 사람(`scripts/blame_author.py`, git blame). 이름 + 날짜, 미커밋은 "미커밋(작업 중)". git 정보 없으면 생략.
   ```bash
-  python3 "${CLAUDE_PLUGIN_ROOT}/scripts/blame_author.py" --file <경로> --lines <n1,n2,...> --json   # Windows는 python 또는 py
+  python3 ${CLAUDE_PLUGIN_ROOT}/scripts/blame_author.py --file <경로> --lines <n1,n2,...> --json   # Windows는 python 또는 py
   ```
 - **접근 컬럼** - `WHERE`/`JOIN`/`ORDER BY` 컬럼.
 - **인덱스 커버** - `✅ <인덱스>` / `❌ 미커버` / `❓ 스키마 미확인`.
