@@ -13,7 +13,7 @@ SKILL.md 절차가 이 템플릿의 {{...}} 자리를 채워 두 곳에 출력�
 - **스킬 버전:** query-inspector {{skill_version}}   <!-- version_check.py --local 로 확인 -->
 - **범위:** {{range}}   /   **깊이:** {{depth_used}}{{depth_downgrade_note}}   /   **언어:** {{report_language}}
 - **방언(dialect):** {{dialect}} ({{dialect_evidence}})
-- **대상:** 파일 {{file_count}} / 추출 쿼리 {{query_count}} (EXACT {{n_exact}} / INFERRED {{n_inferred}} / AMBIGUOUS {{n_ambiguous}})
+- **대상:** 파일 {{file_count}} / 추출 쿼리 {{query_count}} (EXACT {{n_exact}} / INFERRED {{n_inferred}} / AMBIGUOUS {{n_ambiguous}})   <!-- 쿼리 수/라벨 분포는 어댑터가 추출한 지점 기준 집계(추출은 LLM이 수행 - 스크립트 자동 카운트가 아님). 대형 프로젝트는 근사치로 표기하고 "약 N"처럼 명시한다 -->
 - **심각도:** 🔴 critical {{n_critical}} / 🟡 warn {{n_warn}} / ⚪ info {{n_info}}
 {{db_audit_line}}  <!-- Tier3 사용 시: "DB: dev(localhost) / EXPLAIN 3건 / ANALYZE 0건" 등 감사 로그 -->
 

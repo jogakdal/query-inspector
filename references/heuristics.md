@@ -319,7 +319,7 @@ WHERE UPPER(name) = 'KIM'
 
 **왜 문제인가** 동시 실행 시 다른 트랜잭션의 갱신을 덮어써 **갱신 유실(lost update)** - 성능이 아니라 데이터 정확성 문제.
 
-**수정 제안** 원자적 갱신(`F()` 식 `update(count=F('count')+1)`), `select_for_update`로 행 잠금, `save(update_fields=[...])`로 갱신 컬럼 한정.
+**수정 제안** 읽어서 더하지 말고 DB 식으로 원자적 갱신한다. Django: `F()` 식 `update(count=F('count')+1)`, `save(update_fields=[...])`로 갱신 컬럼 한정. SQLAlchemy: `update(Model).values(count=Model.count + 1)`(Core/2.0) 또는 `with_for_update()`로 행 잠금. 공통: `select_for_update`/행 잠금으로 읽기-수정-쓰기 구간 보호.
 
 ---
 
@@ -350,6 +350,16 @@ WHERE UPPER(name) = 'KIM'
 **왜 문제인가** 성능 이전에 데이터가 틀린다 - 조용히 잘못된 값을 반환하므로 가장 늦게 발견된다.
 
 **수정 제안** 바인드 타입/구조를 컬럼과 구조에 맞게 교정, 집계는 팬아웃을 분리(`Subquery`/별도 집계 후 조인), 필요한 `GROUP BY`를 명시. 실 SQL과 샘플 데이터로 결과를 검증하도록 안내.
+
+---
+
+## 21. `scope_filter_bypass` - 권한/범위 필터 누락·무력화 / 기본 🔴 critical / **보안**
+
+**탐지 신호** 사용자/테넌트/그룹 스코프 필터가 쿼리에서 누락되거나 무력화되는 경우: SQLAlchemy `.any()`/`.has()`가 소유 엔티티 미조인으로 **비상관 EXISTS**가 되어 전건 통과(`python-sqlalchemy.md` "조인 없이 타 엔티티 참조"), 멀티테넌트 쿼리에 `tenant_id`/`owner_id` 조건 누락, 권한 체크를 애플리케이션 레벨로만 미룬 전건 조회.
+
+**왜 문제인가** 성능이 아니라 **접근 통제 결함** - 다른 사용자/테넌트의 데이터가 노출되거나 권한 필터가 전건 통과된다. `query_correctness`의 보안 특화 형태로, 조용히 잘못된 범위를 반환한다.
+
+**수정 제안** 스코프 조건을 조인과 함께 상관시킨다(`select(X).join(Owner).where(Owner.scope.any(...))`), 테넌트/소유자 필터를 쿼리 레벨에 강제(기본 필터/세션 스코프), 권한을 DB 조건으로 표현. 실 SQL로 필터가 실제 적용되는지 확인한다.
 
 ---
 
