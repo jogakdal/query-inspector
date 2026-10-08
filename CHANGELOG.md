@@ -5,6 +5,27 @@
 
 > 플러그인 갱신(`claude plugin update`)은 버전 비교로 동작하므로, 스킬 내용을 바꿀 때는 `plugin.json`/`marketplace.json`의 버전을 함께 올립니다.
 
+## [1.1.0] - 2026-10-08
+
+실무 검증(django-oscar, flaskbb)과 각 자가 진단 리포트를 반영한 Python(Django/SQLAlchemy) 커버리지 강화 + 버그 수정 릴리스.
+
+### Added
+- **Python(Django/SQLAlchemy) 커버리지 강화** - 원시 SQL 안티패턴 감지(`.raw()`/`.extra()`/`text()`의 f-string/%/+ 보간 -> `string_substitution`, `||`/`NVL`/`SYSDATE`/`ROWNUM` -> `dialect_pipe_concat`, `SELECT *` -> `select_star`). Django 마이그레이션(`migrations/*.py`)과 SQLAlchemy(`versions/*.py`)를 쿼리 소스로 1급 분류. SQLAlchemy는 FK 자동 인덱스가 없어 `user_id`도 `missing_index` 대상(Django와 반대).
+- **휴리스틱 ID 6종 추가** - `write_in_loop`/`lost_update`/`duplicate_query`/`stale_queryset_cache`/`query_correctness`/`scope_filter_bypass`(보안; 카탈로그/i18n/설정 일관). N+1 심각도 매트릭스(N 상한 x 실행 빈도) 추가.
+- **어댑터/방언 규칙 보강(Django)** - python-django: 대소문자 룩업 번역 정정(`__iexact`는 등호, `__istartswith` 추가), 암묵 인덱스(SlugField/O2O/M2M/`*_pattern_ops`), `Meta.ordering` 예외, 마이그레이션 연산 목록, N+1 원천/해소 함정, 행 곱셈/팬아웃. PostgreSQL 방언 노트 스텁 해제(표현식 인덱스 식 일치, pg_trgm, `CONCURRENTLY`, 역방향 스캔, `COUNT(*)`, PG18 skip scan).
+- **어댑터 규칙 보강(SQLAlchemy/Flask, flaskbb 검증)** - 조인 없이 `where`에 타 엔티티를 참조하는 **암묵 FROM 카티전 곱**과 relationship `.any()`/`.has()`의 **비상관 EXISTS(필터 무력화)** 구분 + 컴파일 검증(프로젝트 venv 사용), Flask-SQLAlchemy 구문(`Model.query`/`db.paginate`/`WriteOnly`·`DynamicMapped`), 연관(secondary) 테이블·`ON DELETE CASCADE` 참조측 인덱스(PostgreSQL), Python 멀티 DB 방언 판정(운영 구성 우선), Jinja2 등 서버 템플릿을 `template` 유형으로 수집해 N+1 점검.
+
+### Fixed
+- **상태 경로 불일치(치명)** - `SKILL.md`가 상태를 `<report.dir>/state.json`으로 적어 스크립트(`<report.dir>/tuning-reports/state.json`)와 어긋나, 두 번째 실행부터 증분/follow-up이 깨지던 문제.
+- **collect_diff** - `--files`가 baseline diff로 한정돼 첫 실행 후 0건이 되던 문제, diff 모드의 `other`/삭제 파일 미제외, `--continue`의 glob pathspec(`:(glob)`), 테스트 경로 판정(저장소 상대 + Python `tests/`/`test_*.py`), 루트 `migrations/*.py` 분류, `--all`에서 테스트/문서(`docs/`/`setup.py` 등) 노이즈 제외.
+- **blame_author** - `.git-blame-ignore-revs` 자동 적용(일괄 포맷 커밋 오귀속 방지), 일괄 blame 실패 시 라인별 재시도(실행자 오귀속 방지).
+- **version_check** - 기본 원격 HTTPS 전환(SSH :22 차단 환경의 매 실행 지연 제거), 실패 백오프 캐시, 빠른 실패, 로컬>원격(개발 빌드) 구분 표시.
+- 어댑터 휴리스틱 id `redundant_distinct` -> `distinct_abuse` 정합.
+
+### Changed
+- 자가 진단 리포트 템플릿에 `fix_site`(수정 지점)/검증 수준 필드, info 축약, 대규모 병렬 스캔 병합 규칙 안내.
+- critical 종료 신호를 `[query-inspector] critical=<N>` 터미널 마커로 정의. 자동 실행 예시의 스크립트 경로 따옴표 제거(`allowed-tools` 권한 매칭 정합).
+
 ## [1.0.3] - 2026-10-07
 
 ### Added

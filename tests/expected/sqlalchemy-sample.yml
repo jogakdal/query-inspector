@@ -1,0 +1,40 @@
+# 골든 기대 - tests/fixtures/sqlalchemy-sample (python-sqlalchemy 어댑터)
+# SQLAlchemy ORM에서 missing_index/n_plus_one/leading_wildcard_like/order_by_filesort를 잡고,
+# SQLAlchemy는 FK 자동 인덱스가 없으므로(Django와 반대) user_id FK도 missing_index 대상임을 검증한다.
+fixture: tests/fixtures/sqlalchemy-sample
+stack: python-sqlalchemy
+dialect:
+  expect: postgresql
+  evidence: "requirements.txt (psycopg2-binary)"
+schema_note: >-
+  Order에 (status, created_at) 인덱스 미정의 -> orders(status, created_at) 인덱스 없음.
+  SQLAlchemy는 FK에 기본 인덱스를 만들지 않으므로(Django와 반대) user_id도 index=True가 없으면
+  missing_index 대상이다 - 이 점이 python-django 골든의 must_not_detect와 정확히 대비된다.
+
+must_detect:
+  - { id: missing_index,         at: queries.py, note: "filter(status).order_by(created_at.desc()) -> orders(status, created_at)" }
+  - { id: n_plus_one,            at: queries.py, note: "루프에서 o.user 접근(lazy='select'), selectinload/joinedload 누락" }
+  - { id: leading_wildcard_like, at: queries.py, note: "User.name.ilike('%q%') -> LIKE '%q%'" }
+  - { id: order_by_filesort,     at: queries.py, note: "order_by(created_at.desc()) 인덱스 부재" }
+  - { id: string_substitution,   at: queries.py, note: "unsafe_search: text(f-string) 보간 -> SQL 인젝션 + 플랜 캐시 오염; :n 바인드 권장" }
+  - { id: select_star,           at: queries.py, note: "text SELECT * FROM users -> 명시 컬럼 권장" }
+
+must_suggest_index:
+  - "orders (status, created_at)"
+
+# SQLAlchemy 특유(Django와 반대): FK 자동 인덱스가 없으므로 user_id 인덱스 권고는 오탐이 아니다.
+must_detect_fk_index:
+  - { id: missing_index, at: models.py, note: "user_id FK는 SQLAlchemy 기본 인덱스가 없음 -> index=True 또는 복합 인덱스 선행 컬럼 권고" }
+
+# session.query 체인 -> SQL 번역이 맞는지(핵심 검증)
+must_translate:
+  - query: 'session.query(Order).filter(Order.status == "paid").order_by(Order.created_at.desc())'
+    sql_like: "WHERE status = ? ORDER BY created_at DESC"
+    label: INFERRED
+  - query: 'select(Order).where(Order.status == "paid").limit(20)'
+    sql_like: "WHERE status = ? LIMIT 20"
+    label: INFERRED
+
+must_note:
+  - "모든 python-sqlalchemy 추론은 echo=True / 컴파일된 SQL(str(stmt.compile(...))) 검증 안내를 포함해야 함(과신 방지)"
+  - "N+1 해소는 selectinload(Order.user) 또는 joinedload(Order.user)로 안내"

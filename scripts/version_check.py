@@ -36,7 +36,7 @@ for _s in (sys.stdout, sys.stderr):
     except Exception:
         pass
 
-DEFAULT_REPO = "git@github.com:jogakdal/query-inspector.git"
+DEFAULT_REPO = "https://github.com/jogakdal/query-inspector.git"   # HTTPS: 공개 repo 익명 읽기, SSH 22 차단 환경 회피(B7)
 # 스킬 방식에서 self-update로 교체하는 구성요소(query-inspector-setup의 COMPONENTS와 동일).
 # 멀티스킬 구조: 루트 SKILL.md 대신 skills/(2개 스킬)를 통째 교체한다.
 COMPONENTS = ["skills", ".claude-plugin", "references", "scripts", "assets", ".query-inspector.example.yml"]
@@ -44,9 +44,14 @@ CHECK_INTERVAL_HOURS = 24
 
 
 def git(*args, timeout=60):
+    env = dict(os.environ)
+    # SSH 원격이 막힌 환경(22번 포트 차단)에서 매 실행 장시간 대기하지 않도록 빠른 실패 유도(B7).
+    # HTTPS 비공개 원격의 자격증명 프롬프트로 무한 대기하는 것도 막는다.
+    env.setdefault("GIT_SSH_COMMAND", "ssh -o BatchMode=yes -o ConnectTimeout=5")
+    env.setdefault("GIT_TERMINAL_PROMPT", "0")
     try:
         p = subprocess.run(["git", *args], capture_output=True, text=True,
-                           encoding="utf-8", timeout=timeout)
+                           encoding="utf-8", timeout=timeout, env=env)
     except FileNotFoundError:
         return 127, "", "git 명령을 찾을 수 없음"
     except subprocess.TimeoutExpired:
@@ -124,7 +129,11 @@ def emit(result, as_json):
         print(f"새 버전 있음: 로컬 {result.get('local_version')} → 원격 {result.get('remote_version')} (방식: {m})")
         print("권장 조치:", result.get("action"))
     else:
-        print(f"최신입니다(로컬 {result.get('local_version')}, 방식: {m}).")
+        lv = result.get("local_version"); rv = result.get("remote_version")
+        if rv and parse_semver(lv) > parse_semver(rv):
+            print(f"로컬이 원격보다 최신(개발 빌드): 로컬 {lv} > 원격 {rv} (방식: {m}).")
+        else:
+            print(f"최신입니다(로컬 {lv}, 방식: {m}).")
 
 
 def main() -> int:
@@ -167,9 +176,12 @@ def main() -> int:
         return 0
 
     # 원격 최신 커밋 확인(가벼움). 실패는 조용히 skip(네트워크/인증 없음).
-    rc, out, err = git("ls-remote", "--exit-code", args.repo, "HEAD", timeout=30)
+    rc, out, err = git("ls-remote", "--exit-code", args.repo, "HEAD", timeout=10)
     if rc != 0 or not out.strip():
         result["reason"] = f"원격 확인 불가({err.strip() or rc})"
+        # 실패도 하루 1회 제한에 포함되게 last_check를 기록(백오프) — 매 실행 재시도/지연 방지(B7)
+        if not args.force:
+            _save_check(check_path, state.get("last_remote_commit"), state.get("remote_version"))
         emit(result, args.json)
         return 3
 

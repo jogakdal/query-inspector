@@ -15,6 +15,8 @@ must_detect:
   - { id: n_plus_one,            at: views.py, note: "루프에서 o.user 접근, select_related('user') 누락" }
   - { id: leading_wildcard_like, at: views.py, note: "user__name__icontains -> LIKE '%q%'" }
   - { id: order_by_filesort,     at: views.py, note: "order_by('-created_at') 인덱스 부재" }
+  - { id: string_substitution,   at: views.py, note: "unsafe_raw: raw(f-string) 보간 -> SQL 인젝션 + 플랜 캐시 오염; params=[] 바인드 권장" }
+  - { id: select_star,           at: views.py, note: "raw SELECT * FROM orders -> 명시 컬럼 권장" }
 
 must_suggest_index:
   - "orders (status, created_at)"

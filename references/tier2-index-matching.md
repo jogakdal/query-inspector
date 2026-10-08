@@ -52,6 +52,8 @@
 - **커버링:** `SELECT` 컬럼까지 인덱스에 포함되면 covering(테이블 접근 없음). 좁은 조회에 유효.
 - **다중 단일-컬럼 인덱스 + 복합 부재:** `WHERE a=? AND b=? ORDER BY c`인데 `(a)`/`(b)`/`(c)`가 **각각 단일 인덱스**로만 있고 복합 인덱스가 없으면, 옵티마이저는 대개 **한 인덱스만 골라 부분 사용**하고 나머지 조건/정렬은 필터/filesort로 처리한다(MySQL `index_merge`가 될 수도 있으나 조건/통계 의존이라 보장 못 함). 이 경우 **부분 커버**로 보고 단정하지 말고(`❓`/⚠️), 조건을 함께 커버하는 **복합 인덱스**를 제안한다. `index_merge` 가능성은 근거로만 덧붙인다.
 - **UPSERT(`INSERT ... ON DUPLICATE KEY UPDATE`):** 충돌 감지에 쓰이는 **PK/UNIQUE 인덱스**가 있어야 동작한다 - 이 인덱스는 "쓰기 경로의 필수 제약"으로 보고, 없거나 의도한 유니크 키가 부재하면 지적한다(조회 성능용 `missing_index`와 구분해 표기).
+- **연관(secondary) 테이블:** M2M `secondary` 연관 테이블(예: SQLAlchemy `relationship(secondary=...)`, Django 자동 중간 테이블)에 **PK/UNIQUE가 없으면** 중복 행이 허용되고 조인 시 풀스캔이 된다. 두 FK의 **복합 PK**(또는 각 방향 조회용 인덱스)를 제안한다 - 조회 성능과 중복 방지 모두.
+- **FK `ON DELETE CASCADE`/`SET NULL` 참조측(PostgreSQL):** 부모 행 삭제 시 DB가 자식의 FK 컬럼을 탐색한다. **CASCADE/SET NULL FK 컬럼에 인덱스가 없으면 삭제마다 자식 테이블 풀스캔**이다 - 조회뿐 아니라 삭제 경로 때문에도 `missing_index`로 지적한다. (MySQL/InnoDB는 FK에 인덱스를 자동 생성하므로 해당 없음 - PostgreSQL 특화.)
 
 판정 결과:
 - 접근 경로를 **어떤 인덱스도 커버하지 못함** -> `missing_index` 🔴.

@@ -13,8 +13,9 @@ version: 1
 # 활성 어댑터 — 변경 파일을 어느 추출 규칙으로 라우팅할지.
 #   mybatis · native-sql · jpa(Spring Data/JPQL/QueryDSL/Kotlin JDSL) = 기본 활성.
 #   migration은 stacks 활성 시 마이그레이션 SQL도 튜닝 대상(비활성이어도 Tier2 인덱스 소스로 자동 감지).
-#   Django 프로젝트면 python-django를 추가한다(확장 어댑터). 예: stacks: [python-django]
-#   SQLAlchemy 프로젝트면 python-sqlalchemy. 예: stacks: [python-sqlalchemy]
+#   python-django / python-sqlalchemy(확장) = Django / SQLAlchemy 의존이 감지되면 자동 활성되므로
+#     보통 명시할 필요가 없다. 자동 감지를 끄고 고정하고 싶을 때만 지정.
+#     예: stacks: [mybatis, native-sql, jpa, python-django]
 stacks: [mybatis, native-sql, jpa]
 
 # SQL 방언(dialect) — mysql | mariadb | postgresql | oracle | ansi | auto
@@ -73,6 +74,12 @@ severity_rules:
   or_predicate_index: info
   count_large: info
   transaction_lock_scope: info
+  write_in_loop: warn             # 루프 내 행별 save/create — bulk 권장
+  lost_update: warn               # 읽기-수정-쓰기 경쟁 — F() 원자 갱신/행 잠금(정확성)
+  duplicate_query: info           # 요청 내 동일 쿼리 반복 — 메모이제이션
+  stale_queryset_cache: warn      # 모듈/클래스 레벨 QuerySet 평가 캐시
+  query_correctness: critical     # 결과가 틀리는 쿼리(잘못된 바인드/집계 팬아웃) — 정확성
+  scope_filter_bypass: critical   # 권한/테넌트 스코프 필터 누락·무력화 — 보안
   # 여기 나열되지 않은 ID는 references/heuristics.md의 각 항목 기본 심각도를 따른다.
 
 # ---------------------------------------------------------------------------
