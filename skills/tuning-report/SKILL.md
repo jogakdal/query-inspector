@@ -90,9 +90,9 @@ allowed-tools: Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/collect_diff.py *), Ba
 `${CLAUDE_PLUGIN_ROOT}/assets/report_template.md`를 채워 두 곳에 출력한다.
 
 1. **터미널 요약** - 위험도순 상위 `terminal_top_n`개(기본 10). `min_severity` 하한 적용.
-2. **상세 리포트 파일** - `report.dir`의 `tuning-reports/`(기본 `docs/query-inspector/tuning-reports/`) 아래 `<timestamp>.md`. 이력/캐시 겸용.
+2. **상세 리포트 파일** - `report.dir`의 `tuning-reports/`(기본 `docs/query-inspector/tuning-reports/`) 아래 `<timestamp>.md`. 이력/캐시 겸용. **단 점진 스캔(`--continue`) 세션 중에는 배치마다 새 파일을 만들지 않고 `scan_progress.report_file`(세션 리포트) 한 벌에 누적/갱신**한다 - 모든 이터레이션이 그 파일을 공유하고, 뒤 배치가 앞 도메인 항목의 오류를 같은 파일에서 정정한다. 세션 간/일반 실행은 각자 `<timestamp>.md`로 이력을 유지한다(`references/state-and-followup.md` '세션 리포트'). 진단 리포트(`--self-diagnose-internal`)는 세션 규약과 무관하게 이터레이션마다 생성한다.
 
-리포트에는 반드시 포함: **사용한 스킬 버전**(헤더 - `version_check.py ... --local`로 확인), 대상 범위(증분/전체 + baseline)/파일/쿼리 수/라벨 분포, 사용된 깊이(및 강등 사유), 감지된 방언(및 근거), **이전 제안 검증**(상태가 있고 `--all`이 아닐 때만), **실행 계획(Action Items)**, 이슈별 원천/**최종 수정자**/근거/수정안/신뢰도. 심각(critical) 이슈가 있으면 **터미널 요약 마지막 줄에 `[query-inspector] critical=<N>`를 출력**한다(훅/CI가 grep으로 감지하는 선택 신호 - 스킬은 프로세스 종료코드를 직접 제어하지 않으므로 이 텍스트 마커로 대신한다). N=0이면 생략.
+리포트에는 반드시 포함: **사용한 스킬 버전**(헤더 - `version_check.py ... --local`로 확인), 대상 범위(증분/전체 + baseline)/파일/쿼리 수/라벨 분포, 사용된 깊이(및 강등 사유), 감지된 방언(및 근거), **이전 제안 검증**(상태가 있고 `--all`이 아닐 때만), **실행 계획(Action Items)**, 이슈별 원천/**최종 수정자**/근거/수정안/신뢰도. 심각(critical) 이슈가 있으면 **터미널 요약 마지막 줄에 `[query-inspector] critical=<N>`를 출력**한다(훅/CI가 grep으로 감지하는 선택 신호 - 스킬은 프로세스 종료코드를 직접 제어하지 않으므로 이 텍스트 마커로 대신한다). N=0이면 생략. **`--self-diagnose-internal`로 진단 요약도 낼 때는 이 마커를 정규 요약의 마지막 줄로 두고, 진단 요약은 마커 아래 별도 블록으로 출력**한다(마커가 grep에 안정적으로 잡히도록).
 
 **최종 수정자** - 각 이슈 원천 `파일:라인`에 대해 `blame_author.py`(git blame)로 마지막 작성/수정자를 조회해 포함. 한 파일 여러 라인은 한 번에:
 ```bash

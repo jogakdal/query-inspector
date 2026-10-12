@@ -9,11 +9,19 @@
 - 각 항목의 **ID**는 설정 `severity_rules`의 키와 일치한다. 사용자 설정이 있으면 그 심각도로 오버라이드한다.
 - 탐지되면 리포트에 `[심각도] 이름 - 위치 (신뢰도라벨)` / 원천 / 근거 / 추론 SQL / 수정 제안을 채운다.
 - **거짓 양성을 경계한다.** "신호"가 보여도 맥락상 문제 아니면(예: 결과가 확실히 소량, 배치성 1회 실행) 심각도를 낮추거나 info로 기록한다. 확신이 없으면 단정 대신 "확인 권장"으로 적는다.
+- **도달 가능성(활성/비활성/미사용) 판정 - 레거시에서 특히 중요.** 결함을 보고하기 전에 그 코드가 **실제 실행 경로에 있는지** 먼저 확인한다: (1) 주석 처리/비활성 step·분기, (2) 호출부가 없는(dead) 매퍼 문장/메서드, (3) 활성. **비활성/미사용 경로의 결함은 심각도를 `⚪ info`로 하향**하고 "비활성/미사용 - 실행 경로 없음"을 근거에 명시한다(활성 결함이 리포트 상단을 차지하도록). 호출부 추적: MyBatis는 `namespace -> 매퍼 인터페이스 -> 그 타입을 참조하는 호출부`(동명 메서드 혼동 주의 - 반드시 매퍼 "타입" 기준), JPA/DAO는 메서드 참조로. 상세: `references/adapters/mybatis.md`.
 - 심각도 기본값은 각 항목의 *기본 심각도*. SQL 방언(dialect) 의존 판단은 `dialects/<dialect>.md`를 함께 본다.
 
 **반복형(`n_plus_one`/`write_in_loop`/`duplicate_query`) 심각도 매트릭스** - 반복 비용은 "반복 횟수 N의 상한 x 실행 빈도"로 정한다. 같은 이슈를 매번 다르게(critical/warn) 판정하지 않도록, 운영자가 프로젝트 기준을 `severity_rules`로 고정하길 권한다.
 
 **적용 우선순위:** 사용자 설정 `severity_rules`에 해당 ID가 있으면 **그 값이 최우선(운영자 고정값)**이며 이 매트릭스로 덮어쓰지 않는다. 설정이 없을 때만 매트릭스로 판정한다 - 매트릭스는 기본값 산출기다. example 설정의 값(`n_plus_one: critical` 등)은 **예시 기본값**이며, 프로젝트가 자체 `.query-inspector.yml`로 고정하지 않는 한 매트릭스가 우선한다.
+
+**심각도 결정 순서(한 곳 정리 - 규칙이 겹칠 때 이 순서로).**
+1. **도달 가능성**(위) - 비활성/미사용이면 `info`로 하향. **다른 모든 규칙에 우선한다.**
+2. **운영자 고정값** - 프로젝트 `.query-inspector.yml`의 `severity_rules`에 ID가 있으면 그 값(example의 값은 "예시 기본값"이라 여기 해당하지 않음).
+3. **SCHEMA-PARTIAL 고정** - `missing_index`가 스키마 미확인이면 `warn` 고정(`tier2-index-matching.md` 5절). severity_rules의 critical보다 이게 우선하고, 확정 소스(`LIVE-SCHEMA`/`SCHEMA-CONFIRMED`) 확보 시 critical로 승격.
+4. **반복형 매트릭스** - `n_plus_one`/`write_in_loop`/`duplicate_query`는 위 매트릭스.
+5. **기본 심각도** - 그 외는 각 항목의 기본값.
 
 | N 상한 \ 실행 빈도 | 매 요청·스토어프런트(고빈도) | 스태프·admin(저빈도) | 외부 연동 API(빈도 미상) | 배치 1회 |
 |---|---|---|---|---|
@@ -367,6 +375,60 @@ WHERE UPPER(name) = 'KIM'
 
 ---
 
+## 22. `tx_not_participating` - 쓰기 트랜잭션 미참여 / 기본 🔴 critical / **원자성**
+
+쓰기 경로(DAO 래퍼/`JdbcTemplate`/수동 `EntityManager`/Spring Batch step)가 **주 트랜잭션과 다른 커넥션/트랜잭션 매니저**를 써서, 다단계 갱신이 하나의 트랜잭션으로 묶이지 않는 경우. (구 `out_of_catalog`에서 승격.)
+
+**탐지 신호**
+- 쓰기 래퍼가 `@Transactional`과 다른 `DataSource`로 생성됨(별도 `JdbcTemplate` 빈 등).
+- **Spring Batch:** step 트랜잭션 매니저(`BatchConfigurer`/`StepBuilder`)와 업무 리포지토리/매퍼의 트랜잭션 매니저가 **다른 리소스**(DataSource/EMF)를 가리킴 - 청크 커밋과 업무 쓰기가 별도 트랜잭션.
+- 수동 `EntityManager`/`getTransaction()`을 선언적 트랜잭션과 섞어 씀.
+
+**왜 문제인가** 다단계 갱신이 부분 커밋되고 실패 시 롤백되지 않는다 - 성능이 아니라 원자성/정확성.
+
+**수정 제안** 쓰기 경로를 주 트랜잭션 매니저/`DataSource`에 통일. Spring Batch는 step 트랜잭션 매니저와 업무 트랜잭션 매니저의 리소스를 일치시키거나 업무 쓰기를 chunk 트랜잭션에 참여시킨다. 롤백 회귀 테스트로 확인.
+
+---
+
+## 23. `replica_routing_defect` - read replica 라우팅 결함 / 기본 🔴 critical(정확성) 또는 🟡 warn / **정확성/성능**
+
+읽기/쓰기 DataSource 라우팅(`AbstractRoutingDataSource`/replica 분리)이 의도대로 동작하지 않는 경우. (구 `out_of_catalog`에서 승격.)
+
+**탐지 신호**
+- replica/master 빈 이름 충돌(같은 이름)로 모든 조회가 한쪽으로 감.
+- `@Transactional(readOnly=true)` 부재로 라우팅이 master로 고정.
+- 쓰기 직후 같은 요청에서 replica를 읽어 **복제 지연으로 stale** 데이터.
+
+**왜 문제인가** master 과부하(성능) 또는 복제 지연으로 방금 쓴 데이터를 못 읽음(정확성). 의도(복제 지연 회피용 master 읽기)일 수 있으니 확인 후 심각도 조정.
+
+**수정 제안** 라우팅 빈 이름/키 교정, 읽기 전용 트랜잭션 표기, 쓰기 직후 읽기는 master 강제 또는 지연 허용 설계.
+
+---
+
+## 24. `connection_abandon` - 커넥션 강제 회수(풀 abandon) / 기본 🟡 warn / **안정성**
+
+커넥션 풀(DBCP2 등)의 `removeAbandoned`/타임아웃 설정이 장시간 쿼리/배치를 **실행 중에 강제 회수**할 수 있는 경우. (구 `out_of_catalog`에서 승격.)
+
+**탐지 신호** `removeAbandonedOnBorrow`/`removeAbandonedTimeout`이 배치/장시간 작업의 쿼리 소요보다 짧게 설정됨.
+
+**왜 문제인가** 실행 중 커넥션이 회수되면 쿼리 실패/트랜잭션 중단. 배치에서 특히 위험.
+
+**수정 제안** 장시간 작업 전용 풀/타임아웃 상향, 또는 abandon 설정 재검토. 실제 60초+ 쿼리 존재 여부 측정 권장.
+
+---
+
+## 25. `paging_on_mutating_set` - 처리로 줄어드는 대상의 OFFSET 페이징 / 기본 🔴 critical / **정확성**
+
+리더가 **WHERE/HAVING 조건으로 대상을 뽑는데, 같은 처리(writer/프로세서)가 그 조건 컬럼을 갱신**해 대상 집합이 줄고, 동시에 **OFFSET 기반 페이징**으로 읽어 **행이 건너뛰어져 누락**되는 경우. Spring Batch 리더/프로세서 구조에서 흔하다.
+
+**탐지 신호** 리더 쿼리의 WHERE/HAVING 조건 컬럼을 같은 step의 writer가 갱신(처리 후 대상에서 빠짐) + chunk 단위 커밋 + `LIMIT ? OFFSET ?` 페이지 증가. 한 step은 이를 피하고(첫 read에서 전체 확보) 다른 step은 못 피하는 혼재도 신호.
+
+**왜 문제인가** 처리된 행이 대상에서 빠지면서 뒤 페이지 OFFSET이 밀려 **중간 행이 조용히 누락**된다 - 성능이 아니라 데이터 정확성(일부 대상 미처리).
+
+**수정 제안** OFFSET 페이징 대신 **키셋/커서**, 또는 **첫 read에서 전체 대상 확보 후 처리**(대상 규모가 작을 때), 또는 처리 상태 플래그로 대상을 고정해 재조회하지 않는다.
+
+---
+
 ## ~ `out_of_catalog` - 카탈로그 외 항목(메타) / 심각도 규칙 기반 / **발견 성격에 따름**
 
 이 카탈로그의 명명된 ID 어디에도 들어맞지 않는 결함을 담는 **메타 항목**이다. 실제 리뷰에서 가장 중대한 결함이 여기 해당하는 경우가 있으므로(쓰기 트랜잭션 미참여, 커넥션 라우팅 결함 등), **"카탈로그에 없음"을 "경미함"으로 취급하지 않는다.**
@@ -378,15 +440,17 @@ WHERE UPPER(name) = 'KIM'
 
 **리포트 표기** ID는 `out_of_catalog`로 적되, **이름(name)에 구체 패턴을 병기**한다(예: "카탈로그 외 항목(`out_of_catalog`) - 쓰기 트랜잭션 미참여"). 근거/수정 제안/신뢰도 라벨은 다른 항목과 동일하게 채운다.
 
-**자주 나타나는 패턴 (정식 ID 승격 후보)**
+**정식 ID로 승격된 패턴** (아래는 더 이상 `out_of_catalog`가 아니라 전용 ID로 보고한다):
+- 쓰기 트랜잭션 미참여 -> **`tx_not_participating`**(22)
+- read replica 라우팅 결함 -> **`replica_routing_defect`**(23)
+- 커넥션 강제 회수(풀 abandon) -> **`connection_abandon`**(24)
+
+**아직 `out_of_catalog`로 남는 패턴** (빈도가 높아지면 승격 검토):
 | 패턴 | 전형적 심각도 | 신호 |
 |---|---|---|
-| 쓰기 트랜잭션 미참여 | 🔴 critical(원자성) | 쓰기 래퍼(`JdbcTemplate` 등)가 `@Transactional`과 다른 커넥션/`DataSource`를 쓴다 - 다단계 갱신이 부분 커밋되고 롤백이 안 된다 |
-| read replica 라우팅 결함 | 🔴 critical(정확성) 또는 🟡 warn | replica/master 빈 이름 충돌로 모든 조회가 master로 감, 또는 `@Transactional(readOnly)` 없이 쓰기 직후 replica 읽기(복제 지연으로 stale) |
-| 트랜잭션 없는 복합 쓰기 | 🔴 critical(원자성) | 연관된 INSERT/UPDATE가 트랜잭션 경계 밖에서 실행 |
+| 트랜잭션 없는 복합 쓰기 | 🔴 critical(원자성) | 연관된 INSERT/UPDATE가 트랜잭션 경계 밖에서 실행(위 `tx_not_participating`에 해당하면 그 ID로) |
 | 커넥션/세션 과다 획득 | 🟡 warn | 행마다 외부 에이전트/키 초기화, 매 요청 세션 SELECT+UPDATE |
-
-빈도가 높아지는 패턴은 정식 ID로 승격을 검토한다. 승격 전까지는 `out_of_catalog`로 보고하고 위 심각도 규칙을 적용한다.
+| 관측성/위생 | ⚪ info | 로그에 SQL/자격증명 노출, 결과에 안 쓰는 불필요 LEFT JOIN 등(성격별 심각도 규칙) |
 
 ---
 

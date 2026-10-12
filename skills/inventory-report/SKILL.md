@@ -62,7 +62,7 @@ allowed-tools: Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/collect_diff.py *), Ba
 
 **상태:** 목록화는 튜닝이 아니므로 **`state.json`을 갱신하지 않는다**(baseline 전진/`open_suggestions` 변경 없음). 점진 배치를 쓰면 `scan_progress`는 진행률 표시/`--continue` 재개에만 쓰고, 완료해도 baseline을 전진시키지 않는다.
 
-**출력:** `${CLAUDE_PLUGIN_ROOT}/assets/inventory_template.md`를 채워 `report.dir`의 `inventory-reports/inventory-<timestamp>.md`로 저장하고, 터미널에는 요약(유형/테이블별 쿼리 수 + 상위 목록)을 출력한다. 리포트 헤더에 사용 스킬 버전 표기. 출력 언어는 `report.language`/`--lang`.
+**출력:** `${CLAUDE_PLUGIN_ROOT}/assets/inventory_template.md`를 채워 `report.dir`의 `inventory-reports/inventory-<timestamp>.md`로 저장하고, 터미널에는 요약(유형/테이블별 쿼리 수 + 상위 목록)을 출력한다. 리포트 헤더에 사용 스킬 버전 표기. 출력 언어는 `report.language`/`--lang`. **단 점진 스캔(`--continue`) 세션 중에는 배치마다 새 파일을 만들지 않고 `scan_progress.report_file`(세션 리포트, `inventory-reports/`의 단일 파일) 한 벌에 누적/갱신**한다 - 모든 이터레이션이 그 파일을 공유한다(tuning과 동일 규약, `references/state-and-followup.md` '세션 리포트'). 세션 간/일반 실행은 각자 `inventory-<timestamp>.md`로 이력 유지.
 
 ---
 

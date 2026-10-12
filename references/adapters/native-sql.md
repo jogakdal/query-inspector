@@ -21,7 +21,8 @@
 
 - 래퍼 클래스 소스를 Read해 `JdbcTemplate`/`NamedParameterJdbcTemplate`(또는 `DataSource`/`EntityManager`)을 주입받아 감싸는지 확인한다.
 - 맞으면 그 래퍼의 public 메서드(`select`/`update`/`selectAsStream` 등)를 **쿼리 진입점으로 등록**하고, 호출부의 SQL 인자를 이 어댑터 규칙으로 분석한다.
-- 래퍼가 커넥션/트랜잭션을 어떻게 얻는지도 확인한다 - 별도 `DataSource`로 생성되면 JPA의 `@Transactional`에 참여하지 않을 수 있다(`heuristics.md`의 `out_of_catalog` "쓰기 트랜잭션 미참여" 점검). replica/master 라우팅 빈을 쓰면 라우팅 결함도 함께 본다.
+- 래퍼가 커넥션/트랜잭션을 어떻게 얻는지도 확인한다 - 별도 `DataSource`로 생성되면 주 트랜잭션에 참여하지 않을 수 있다(`heuristics.md` `tx_not_participating`). replica/master 라우팅 빈을 쓰면 `replica_routing_defect`도 함께 본다.
+- **Spring Batch 스택:** step 트랜잭션 매니저(`BatchConfigurer`/`StepBuilder`의 `transactionManager`)와 이 래퍼/리포지토리/매퍼가 쓰는 트랜잭션 매니저가 **같은 리소스(DataSource/EMF)**인지 확인한다 - 다르면 청크 커밋과 업무 쓰기가 분리돼 `tx_not_participating`(부분 커밋/롤백 불가)이다. 커넥션 풀의 abandon 타임아웃이 배치 쿼리 소요보다 짧으면 `connection_abandon`도 본다.
 
 ## SQL 식별 기준
 
