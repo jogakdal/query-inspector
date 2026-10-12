@@ -70,7 +70,18 @@
 
 ## 5. 과신 방지 (필수)
 
-- `SCHEMA-PARTIAL`이면 단정 대신 **"확인 필요"**로 낮추고, 어느 스키마 소스가 부족한지 명시.
+- `SCHEMA-PARTIAL`이면 단정 대신 **"확인 필요"**로 낮추고, 어느 스키마 소스가 부족한지 명시. **심각도는 `🟡 warn`으로 고정한다** - 기본 `missing_index`는 critical이지만, 인덱스 존재를 확인하지 못한 상태에서 critical로 올리면 대량 오탐이 된다. 확정 소스(`LIVE-SCHEMA`/`SCHEMA-CONFIRMED`)를 얻으면 그때 critical로 승격한다. 어조도 "누락"이 아니라 **"미확인 - 확인 필요"**로 쓴다.
+- **엔티티만 있어 인덱스를 알 수 없을 때(SCHEMA-PARTIAL)는 리포트에 '인덱스 확인 목록'을 넣는다** - 대상 테이블들의 인덱스를 한 번에 확인하는 조회 SQL을 제공해 사용자가 바로 확정하게 한다:
+  ```sql
+  -- MySQL/MariaDB: 대상 테이블들의 인덱스 일괄 확인
+  SELECT TABLE_NAME, INDEX_NAME, SEQ_IN_INDEX, COLUMN_NAME, NON_UNIQUE
+  FROM information_schema.STATISTICS
+  WHERE TABLE_SCHEMA = DATABASE()
+    AND TABLE_NAME IN ('tb_a', 'tb_b', ...)
+  ORDER BY TABLE_NAME, INDEX_NAME, SEQ_IN_INDEX;
+  -- PostgreSQL: SELECT tablename, indexname, indexdef FROM pg_indexes WHERE tablename IN (...);
+  ```
+  결과로 인덱스가 확인되면 해당 `missing_index`를 해소하거나 critical로 승격한다. `schema.ddl` 지정이나 `--db` 재실행으로도 확정됨을 함께 안내한다.
 - 매우 작은 테이블/낮은 카디널리티는 인덱스 효과가 제한적임을 함께 안내(무분별한 인덱스 추가 방지).
 - 최종 확증은 Tier3 `EXPLAIN`(`--db`)으로: before/after 실행계획을 근거로 첨부.
 

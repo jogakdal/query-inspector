@@ -80,6 +80,8 @@ severity_rules:
   stale_queryset_cache: warn      # 모듈/클래스 레벨 QuerySet 평가 캐시
   query_correctness: critical     # 결과가 틀리는 쿼리(잘못된 바인드/집계 팬아웃) — 정확성
   scope_filter_bypass: critical   # 권한/테넌트 스코프 필터 누락·무력화 — 보안
+  # out_of_catalog(카탈로그 외 항목)는 고정 심각도가 없다 - 발견 성격에 따라 critical/warn/info로 판정(references/heuristics.md 규칙).
+  #   일괄 고정이 필요할 때만 여기 지정(예: out_of_catalog: warn). 미지정을 권장한다.
   # 여기 나열되지 않은 ID는 references/heuristics.md의 각 항목 기본 심각도를 따른다.
 
 # ---------------------------------------------------------------------------

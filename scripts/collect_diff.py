@@ -80,8 +80,17 @@ def classify(f: str) -> str:
         return "sql"
     if lower.endswith((".kt", ".kts", ".java", ".scala", ".groovy", ".py")):
         return "source"                             # JVM + Python(Django/SQLAlchemy). Node(.js/.ts)는 이후
-    if lower.endswith((".html", ".htm", ".jinja", ".jinja2", ".j2")):
-        return "template"                           # 서버 템플릿(Django/Jinja2/Thymeleaf) - 관계 접근 N+1 점검(서버 렌더링 스택에서만)
+    if lower.endswith((".jinja", ".jinja2", ".j2")):
+        return "template"                           # Jinja2 서버 템플릿(명시 확장자)
+    if lower.endswith((".html", ".htm")):
+        # 서버 렌더링 템플릿만 template. SPA 셸/정적/빌드 HTML은 제외(N+1 점검 대상 아님, M3).
+        _hsegs = lower.split("/")
+        if "templates" in _hsegs[:-1]:
+            return "template"                       # templates/ = 서버 렌더 템플릿(Django/Thymeleaf/Jinja)
+        _static = {"static", "public", "dist", "build", "node_modules", "frontend", "webapp", "assets"}
+        if (_static & set(_hsegs[:-1])) or _hsegs[-1] == "index.html":
+            return "other"                          # SPA 셸/정적/빌드 HTML - 서버 렌더 아님
+        return "template"                           # 그 외는 보수적으로 서버 템플릿 취급
     if (lower.endswith((".yml", ".yaml", ".properties", ".conf", ".gradle", ".toml"))
             or lower.endswith(".gradle.kts") or posixpath.basename(lower) == "pom.xml"):
         return "config"
@@ -93,6 +102,18 @@ _REL = {"mybatis-xml": 3, "sql": 3, "migration-sql": 3, "source": 2, "template":
 
 def relevance(t: str) -> int:
     return _REL.get(t, 0)
+
+
+def collect_schema_candidates():
+    """Tier2 인덱스 소스 후보 - 저장소 전체의 DDL/스키마 `.sql`(테스트 리소스 포함).
+
+    튜닝 대상(changed)과 별개로 수집한다: `is_test_path`로 제외되는 Testcontainers
+    `schema.sql` 등도 인덱스 대조에는 유효한 소스이기 때문이다(M3, 자가진단 2-8).
+    """
+    rc, out = git("ls-files", "*.sql", "*.SQL")
+    if rc != 0:
+        return []
+    return sorted(f for f in out.splitlines() if f)
 
 
 def is_test_path(f: str) -> bool:
@@ -281,6 +302,15 @@ def main() -> int:
             print(f"쿼리 생성 후보(경량 추정 · 파일명/유형 기준): {cand}  <- 전체 source가 아니라 이 수가 실제 튜닝 대상 규모에 가깝다")
         else:
             print("(대상 없음)")
+        sc = collect_schema_candidates()
+        if sc:
+            print("--- Tier2 스키마 후보 (DDL/스키마 .sql · 테스트 리소스 포함) ---")
+            for f in sc[:30]:
+                print(f"  {f}")
+            if len(sc) > 30:
+                print(f"  ... 외 {len(sc)-30}개")
+            print("(인덱스 대조(Tier2) 소스 후보 · 튜닝 대상과 별개로 Read 가능.)")
+            print()
         print()
         print("(SKILL Stage 0: 위 유형·도메인 규모로 범위 선택지를 제시하세요. 목록/diff는 생략됨.)")
         return 0
@@ -299,6 +329,16 @@ def main() -> int:
     for _r, t, f in rows:
         print(f"[{t}]\t{f}")
     print()
+
+    sc = collect_schema_candidates()
+    if sc:
+        print("--- Tier2 스키마 후보 (DDL/스키마 .sql · 테스트 리소스 포함) ---")
+        for f in sc[:30]:
+            print(f"  {f}")
+        if len(sc) > 30:
+            print(f"  ... 외 {len(sc)-30}개")
+        print("(인덱스 대조(Tier2) 소스 후보 · 변경 대상과 별개로 Read 가능.)")
+        print()
 
     if mode == "all":
         print("--- 전체 모드: diff 없음 ---")
