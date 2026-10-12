@@ -104,16 +104,51 @@ def relevance(t: str) -> int:
     return _REL.get(t, 0)
 
 
-def collect_schema_candidates():
-    """Tier2 인덱스 소스 후보 - 저장소 전체의 DDL/스키마 `.sql`(테스트 리소스 포함).
+_DDL_RE = re.compile(r"\bCREATE\s+(TABLE|UNIQUE\s+INDEX|INDEX)\b|\bALTER\s+TABLE\b", re.I)
 
-    튜닝 대상(changed)과 별개로 수집한다: `is_test_path`로 제외되는 Testcontainers
-    `schema.sql` 등도 인덱스 대조에는 유효한 소스이기 때문이다(M3, 자가진단 2-8).
+
+def collect_schema_candidates():
+    """Tier2 인덱스 소스 후보 - 저장소 전체의 `.sql`을 내용으로 분리한다(M6).
+
+    실제 DDL(`CREATE TABLE`/`CREATE INDEX`/`ALTER TABLE`)과 테스트 INSERT 픽스처를
+    구분해 `(ddl_files, other_files)`로 반환한다. `is_test_path`로 제외되는 테스트 리소스
+    DDL도 인덱스 대조에는 유효하므로 포함한다(자가진단 2-8). 내용 확인은 git show.
     """
     rc, out = git("ls-files", "*.sql", "*.SQL")
     if rc != 0:
-        return []
-    return sorted(f for f in out.splitlines() if f)
+        return [], []
+    ddl, other = [], []
+    for f in sorted(set(s for s in out.splitlines() if s)):
+        rc2, content = git("show", "HEAD:" + f)
+        if rc2 != 0:
+            rc2, content = git("show", ":" + f)       # staged/working 폴백
+        if rc2 == 0 and _DDL_RE.search(content or ""):
+            ddl.append(f)
+        else:
+            other.append(f)
+    return ddl, other
+
+
+def _print_schema_candidates():
+    """Stage 0 출력용: Tier2 스키마 후보를 실제 DDL/기타로 나눠 표시한다."""
+    ddl, other = collect_schema_candidates()
+    if not ddl and not other:
+        return
+    print("--- Tier2 스키마 후보 (.sql) ---")
+    if ddl:
+        print(f"[실제 DDL (CREATE TABLE/INDEX/ALTER) {len(ddl)}개] - 인덱스 대조 우선 소스:")
+        for f in ddl[:30]:
+            print(f"  {f}")
+        if len(ddl) > 30:
+            print(f"  ... 외 {len(ddl)-30}개")
+    if other:
+        print(f"[기타 .sql {len(other)}개] - 테스트 INSERT 픽스처 등, 인덱스 소스로는 대개 무관:")
+        for f in other[:10]:
+            print(f"  {f}")
+        if len(other) > 10:
+            print(f"  ... 외 {len(other)-10}개")
+    print("(실제 DDL을 Tier2 인덱스 소스로 우선 Read. 튜닝/변경 대상과 별개.)")
+    print()
 
 
 def is_test_path(f: str) -> bool:
@@ -168,6 +203,48 @@ def read_next_domain(state_file: str):
     return None, []
 
 
+def plan_domains(state_file: str):
+    """scan_progress의 모든 도메인 globs를 전체 쿼리소스와 대조해 커버리지/중복/테스트혼입 검증(H4)."""
+    if not os.path.isfile(state_file):
+        return None
+    try:
+        with open(state_file, encoding="utf-8") as f:
+            sp = (json.load(f).get("scan_progress") or {})
+    except Exception:
+        return None
+    doms = (sp.get("domains_done") or []) + (sp.get("domains_pending") or [])
+    norm = []
+    for d in doms:
+        if isinstance(d, dict):
+            norm.append((d.get("name", ""), list(d.get("globs") or [])))
+        elif isinstance(d, str):
+            norm.append((d, [d]))
+    rc, out = git("ls-files")
+    allsrc = [f for f in out.splitlines()
+              if f and classify(f) != "other" and not is_test_path(f) and not is_doc_or_build_path(f)]
+    allset = set(allsrc)
+    cover: dict = {}
+    test_hit: dict = {}
+    for name, globs in norm:
+        if not globs:
+            continue
+        rc, mo = git("ls-files", *[f":(glob){g}" for g in globs])
+        for f in mo.splitlines():
+            if not f:
+                continue
+            if is_test_path(f):
+                test_hit.setdefault(name, []).append(f)
+                continue
+            if classify(f) == "other" or is_doc_or_build_path(f):
+                continue
+            if f in allset:
+                cover.setdefault(f, []).append(name)
+    uncovered = sorted(allset - set(cover))
+    dup = {f: ds for f, ds in cover.items() if len(ds) > 1}
+    return {"domains": [n for n, _ in norm], "total_src": len(allsrc),
+            "covered": len(cover), "uncovered": uncovered, "duplicated": dup, "test_hit": test_hit}
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(
         prog="collect_diff.py", add_help=True,
@@ -180,11 +257,39 @@ def main() -> int:
     ap.add_argument("--since-last", dest="since_last", action="store_true")
     ap.add_argument("--state", default=STATE_DEFAULT)
     ap.add_argument("--files", nargs="+", default=[])
+    ap.add_argument("--plan-domains", dest="plan_domains", action="store_true")
+    ap.add_argument("--paths-only", dest="paths_only", action="store_true")
     args = ap.parse_args()
 
     if not is_git_repo():
         sys.stderr.write("오류: git 저장소가 아닙니다. query-inspector는 git diff를 대상으로 동작합니다.\n")
         return 3
+
+    if args.plan_domains:
+        r = plan_domains(args.state)
+        if r is None:
+            print("scan_progress가 없습니다 - --plan-domains는 점진 스캔 진행 중에만 유효합니다.")
+            return 0
+        print("=== 점진 스캔 도메인 계획 검증 (--plan-domains) ===")
+        print(f"도메인({len(r['domains'])}): {', '.join(r['domains'])}")
+        print(f"전체 쿼리소스 {r['total_src']} / 커버 {r['covered']} / 미커버 {len(r['uncovered'])}")
+        if r['uncovered']:
+            print("--- 미커버(어느 도메인 glob에도 안 잡힘) ---")
+            for f in r['uncovered'][:40]:
+                print(f"  {f}")
+            if len(r['uncovered']) > 40:
+                print(f"  ... 외 {len(r['uncovered'])-40}개")
+        if r['duplicated']:
+            print("--- 중복(2개 이상 도메인에 매칭) ---")
+            for f, ds in list(r['duplicated'].items())[:20]:
+                print(f"  {f}  <- {', '.join(ds)}")
+        if r['test_hit']:
+            print("--- 테스트 경로 혼입(도메인 glob이 test 매칭) ---")
+            for name, fs in r['test_hit'].items():
+                print(f"  {name}: {len(fs)}건 (예: {fs[0]})")
+        if not r['uncovered'] and not r['duplicated'] and not r['test_hit']:
+            print("OK: 누락/중복/테스트 혼입 없음.")
+        return 0
 
     files = list(args.files)
     display_files = list(files)                      # 사용자 표시용(:(glob) 매직 가공 전 원본)
@@ -257,6 +362,11 @@ def main() -> int:
                 if f and classify(f) != "other":
                     changed.append(f)
 
+    # --paths-only: 대상 경로만 NUL 구분으로 출력(스크립트 파싱용, 셸 단어분할/공백 회피) - L4
+    if args.paths_only:
+        sys.stdout.write("\0".join(changed))
+        return 0
+
     # --- 출력 ---
     print("=== query-inspector : Stage 0 대상 수집 ===")
     if args.cont:
@@ -276,7 +386,8 @@ def main() -> int:
         elif mode == "all":
             print(f"범위: {effective_label or '전체 (--all)'}")
     print(f"상태파일: {args.state} " + ("(있음)" if os.path.isfile(args.state) else "(없음 → 첫 실행 취급)"))
-    print(f"대상 파일 수: {len(changed)}")
+    _tn = sum(1 for f in changed if is_test_path(f))
+    print(f"대상 파일 수: {len(changed)}" + (f" (그 중 테스트 {_tn}건)" if _tn else ""))
     print()
 
     if args.count_only:
@@ -302,15 +413,7 @@ def main() -> int:
             print(f"쿼리 생성 후보(경량 추정 · 파일명/유형 기준): {cand}  <- 전체 source가 아니라 이 수가 실제 튜닝 대상 규모에 가깝다")
         else:
             print("(대상 없음)")
-        sc = collect_schema_candidates()
-        if sc:
-            print("--- Tier2 스키마 후보 (DDL/스키마 .sql · 테스트 리소스 포함) ---")
-            for f in sc[:30]:
-                print(f"  {f}")
-            if len(sc) > 30:
-                print(f"  ... 외 {len(sc)-30}개")
-            print("(인덱스 대조(Tier2) 소스 후보 · 튜닝 대상과 별개로 Read 가능.)")
-            print()
+        _print_schema_candidates()
         print()
         print("(SKILL Stage 0: 위 유형·도메인 규모로 범위 선택지를 제시하세요. 목록/diff는 생략됨.)")
         return 0
@@ -330,15 +433,7 @@ def main() -> int:
         print(f"[{t}]\t{f}")
     print()
 
-    sc = collect_schema_candidates()
-    if sc:
-        print("--- Tier2 스키마 후보 (DDL/스키마 .sql · 테스트 리소스 포함) ---")
-        for f in sc[:30]:
-            print(f"  {f}")
-        if len(sc) > 30:
-            print(f"  ... 외 {len(sc)-30}개")
-        print("(인덱스 대조(Tier2) 소스 후보 · 변경 대상과 별개로 Read 가능.)")
-        print()
+    _print_schema_candidates()
 
     if mode == "all":
         print("--- 전체 모드: diff 없음 ---")

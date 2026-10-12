@@ -5,6 +5,24 @@
 
 > 플러그인 갱신(`claude plugin update`)은 버전 비교로 동작하므로, 스킬 내용을 바꿀 때는 `plugin.json`/`marketplace.json`의 버전을 함께 올립니다.
 
+## [1.2.0] - 2026-10-12
+
+svc-settle-batch(Spring Batch 레거시) 점진 스캔 자가 진단을 반영한 레거시/배치 분석 강화 + 점진 스캔 세션 리포트 릴리스.
+
+### Added
+- **휴리스틱 ID 4종** - `tx_not_participating`(쓰기 트랜잭션 미참여·원자성), `replica_routing_defect`(read replica 라우팅), `connection_abandon`(풀 abandon), `paging_on_mutating_set`(처리로 줄어드는 대상의 OFFSET 페이징·정확성). 앞 3종은 `out_of_catalog`에서 승격. heuristics/i18n/example 3곳 정합.
+- **도달 가능성(활성/비활성/미사용) 판정**(heuristics) - 비활성/미사용 경로 결함을 info로 하향(레거시에서 미사용 코드 결함이 critical 상단을 점유하는 문제 대응). MyBatis 호출부 추적 절차(타입 기준, 동명 메서드 혼동 방지)도 추가.
+- **심각도 결정 순서**(heuristics, pipeline-common 참조) - 도달가능성 -> `severity_rules` -> SCHEMA-PARTIAL 고정 -> 반복형 매트릭스 -> 기본값을 한 곳에 정리.
+- **Spring Batch 트랜잭션 배선 점검**(native-sql) - step 트랜잭션 매니저와 리포지토리/매퍼 트랜잭션 매니저의 리소스 일치 여부.
+- **collect_diff `--plan-domains`**(점진 스캔 도메인 globs의 커버리지/중복/테스트 혼입 검증) / **`--paths-only`**(대상 경로 NUL 출력).
+
+### Changed
+- **점진 스캔(`--continue`) 리포트를 세션 단위 한 벌로 누적** - 이터레이션(도메인 배치)마다 새 타임스탬프 리포트를 만들던 것을, 점진 스캔의 **모든 이터레이션을 하나의 세션**으로 보고 `scan_progress.report_file` 단일 리포트에 누적/갱신한다(뒤 배치가 앞 도메인 항목을 같은 파일에서 정정). 세션 간/일반 실행은 타임스탬프 이력 유지, 진단 리포트는 이터레이션마다 생성(현행). tuning/inventory 공통.
+- **follow-up `seen_count`** - 대상 파일에 변경이 있을 때만 증가(코드 변경 0건 배치에 "N회째 미반영"이 누적되던 문제 대응), 재게시 1줄 압축.
+- **collect_schema_candidates 내용 기반 DDL 판별** - `CREATE TABLE/INDEX/ALTER`를 담은 실제 DDL과 테스트 INSERT 픽스처를 분리 표기.
+- 소유권/도메인 이관(`scan_progress.deferred`), 대형 도메인 하위 분할 기준, 테이블 통합 `missing_index` 지문(`|<table>|*`), `open_suggestions`에 progress/notes/last_checked, 실행계획 선후 표기, 근거 정정(🔄) 표기.
+- **blame_author 이메일 기본 생략**(`--with-mail`로 선택). tier2 엔티티 주석 타입 보조 소스/규모 미확인 표기, mysql 방언 배치 간 재사용, version_check `cached` 키 설명, 리포트 안내문 평서체.
+
 ## [1.1.1] - 2026-10-12
 
 JVM 주력 스택(Kotlin + JdbcTemplate 래퍼/QueryDSL/JPA) 실무 검증(svc-settle-admin)의 자가 진단을 반영한 판정 정확도/병렬 처리/카탈로그 강화 릴리스.

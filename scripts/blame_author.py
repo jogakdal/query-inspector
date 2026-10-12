@@ -148,6 +148,8 @@ def main() -> int:
     ap.add_argument("--file", required=True)
     ap.add_argument("--lines", required=True, help="콤마 구분 라인 번호(예: 42 또는 42,88,120)")
     ap.add_argument("--json", action="store_true")
+    ap.add_argument("--with-mail", dest="with_mail", action="store_true",
+                    help="author 이메일(mail)을 출력에 포함(기본은 생략 - 대화/로그 노출 방지)")
     args = ap.parse_args()
 
     try:
@@ -163,6 +165,9 @@ def main() -> int:
         return 0
 
     info = blame_lines(args.file, lines)
+    if not args.with_mail:                              # 이메일은 기본 생략(대화/로그 노출 방지) - L3
+        for v in info.values():
+            v.pop("mail", None)
     out = {"file": args.file, "lines": {str(k): v for k, v in sorted(info.items())}}
     if args.json:
         print(json.dumps(out, ensure_ascii=False, indent=2))

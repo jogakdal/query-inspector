@@ -21,7 +21,7 @@
 
 ## 설정
 
-**프로젝트 루트의 `.query-inspector.yml`**을 먼저 찾고, 없으면 **`${CLAUDE_PLUGIN_ROOT}/.query-inspector.example.yml`의 기본값**을 사용한다(프로젝트에 설정을 두지 않아도 동작). `stacks`/`dialect`/`schema`/`depth`/`report`/`severity_rules`/`db`/`state`를 반영한다. 인자는 설정을 오버라이드한다.
+**프로젝트 루트의 `.query-inspector.yml`**을 먼저 찾고, 없으면 **`${CLAUDE_PLUGIN_ROOT}/.query-inspector.example.yml`의 기본값**을 사용한다(프로젝트에 설정을 두지 않아도 동작). `stacks`/`dialect`/`schema`/`depth`/`report`/`severity_rules`/`db`/`state`를 반영한다. 인자는 설정을 오버라이드한다. **심각도는 `references/heuristics.md`의 '심각도 결정 순서'를 따른다**(도달 가능성 -> `severity_rules` 고정값 -> SCHEMA-PARTIAL 고정 -> 반복형 매트릭스 -> 기본값; example의 `severity_rules` 값은 "예시 기본값"이라 프로젝트가 자체 `.query-inspector.yml`로 고정하지 않으면 그 뒤 규칙이 우선).
 
 ## 공통 인자 처리 (모든 스킬)
 
@@ -38,7 +38,7 @@
 python3 ${CLAUDE_PLUGIN_ROOT}/scripts/version_check.py --skill-dir "${CLAUDE_PLUGIN_ROOT}" --json   # Windows는 python 또는 py
 ```
 
-- `update_available: false`(또는 `checked: false`) -> **아무 말 없이** Stage 0으로.
+- `update_available: false`(또는 `checked: false`) -> **아무 말 없이** Stage 0으로. (`cached: true`는 당일 캐시로 원격 재조회를 생략했다는 뜻이며 동작/판단에 영향 없다.)
 - `method: "skill"` + `update_available: true` -> **"새 버전 {remote_version}이 있습니다. 지금 업데이트할까요?"** 를 묻고, 동의 시 `--apply --json`으로 self-update. 적용 후 본문/`references`/`scripts`는 다음 발동부터 반영(트리거/권한 변경 릴리스는 새 세션 필요).
 - `method: "plugin"` + `update_available: true` -> 안내만: "`claude plugin update query-inspector@query-inspector-marketplace` 실행 후 재시작하거나, `/plugin` -> Marketplaces에서 auto-update를 켜세요."
 
@@ -71,6 +71,8 @@ python3 ${CLAUDE_PLUGIN_ROOT}/scripts/collect_diff.py --continue    # 점진 스
 3. 다중/충돌/미검출이면 **MySQL 폴백**, 방언 의존 규칙은 보수적(ANSI 안전 패턴)으로 적용하고 근거/불확실성을 리포트에 남긴다.
 
 결정된 방언의 `references/dialects/<dialect>.md`를 이후 단계 참고로 로드한다.
+
+**점진 스캔 배치 간에는** 빌드/설정 파일(`build.gradle(.kts)`/`pom.xml`/datasource)이 변하지 않았으면 배치 1의 방언 판정을 재사용한다(배치마다 재판정하지 않는다).
 
 ## Stage 1 - 쿼리 원천 식별/추출 (어댑터 라우팅)
 

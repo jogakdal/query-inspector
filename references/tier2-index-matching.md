@@ -18,6 +18,7 @@
 - **소스 자동 감지:** 엔티티(JPA `@Entity`/`@Table` 애노테이션)와 마이그레이션/DDL을 **설정 없이도 프로젝트 소스에서 자동 감지**한다(SQL 방언 감지와 같은 원리 - `dialect-detection.md`). 감지 경로는 Flyway/Liquibase 관례(`**/db/migration/V*.sql`/`**/db/changelog/**`)**뿐 아니라 일반 SQL 경로(`**/resources/**/*.sql`/`**/sql/**`, 예: `sql/create/NN_*.sql`/`sql/migration/*.sql`)**도 포함한다(비-Flyway 프로젝트 대응). 자동 감지로 못 찾으면 설정 `schema.ddl`로 지정하며, `schema.*`는 자동 감지를 오버라이드/보강할 때 쓴다.
 - **배포 후 상태 = 실 DB 라이브 스키마(현재) + 이번 변경분의 마이그레이션(델타).** 이 최종 상태로 판정한다: 라이브에도 없고 이번 마이그레이션에도 없으면 `missing_index`; 이번 마이그레이션이 추가하면 OK.
 - 소스 충돌 시 신뢰 순위: **실 DB > 마이그레이션 최신본 > DDL > 엔티티**. 충돌은 리포트에 남긴다.
+- **엔티티 주석의 컬럼 타입(보조 타입 소스):** `@Column(columnDefinition=...)`/`length`/필드 타입(Kotlin `String`/`Int`, `VARCHAR(3)` 등)은 **컬럼 타입의 보조 소스**다 - 타입 의존 판정(정렬 결함, 암시적 캐스팅, 0 채움 여부)에 참고한다. 예: `branch_no VARCHAR(3)`에 0 채움(zero-pad)을 확인하면 문자 정렬이 수치 정렬과 일치해 정렬 결함 오탐을 피할 수 있다. DDL 미제공(SCHEMA-PARTIAL) 시 특히 유용.
 - **스키마 커버리지 판정:** 실 DB 조회 -> `LIVE-SCHEMA`(최고 신뢰). DDL 전체/엔티티 명시 인덱스 확보 -> `SCHEMA-CONFIRMED`. 엔티티에 `@Index`가 없어 인덱스 정의를 알 수 없음 등 불완전 -> `SCHEMA-PARTIAL`(신뢰도 낮춤).
 - **INVISIBLE 인덱스 제외(MySQL 8.0+):** 인벤토리를 구성할 때 **`INVISIBLE` 인덱스**(`SHOW INDEX`의 `IS_VISIBLE=NO`, DDL/`ALTER`의 `... INVISIBLE` 키워드)는 **커버 가능한 인덱스로 세지 않는다** - 옵티마이저가 사용하지 않으므로 해당 컬럼(조합)은 미인덱스로 취급한다. 이 경우 리포트에 "인덱스는 있으나 INVISIBLE"임을 명시하고 신규 생성 대신 `ALTER TABLE <t> ALTER INDEX <idx> VISIBLE;` 전환을 제안한다(`heuristics.md`의 INVISIBLE 변형).
 
@@ -82,7 +83,7 @@
   -- PostgreSQL: SELECT tablename, indexname, indexdef FROM pg_indexes WHERE tablename IN (...);
   ```
   결과로 인덱스가 확인되면 해당 `missing_index`를 해소하거나 critical로 승격한다. `schema.ddl` 지정이나 `--db` 재실행으로도 확정됨을 함께 안내한다.
-- 매우 작은 테이블/낮은 카디널리티는 인덱스 효과가 제한적임을 함께 안내(무분별한 인덱스 추가 방지).
+- 매우 작은 테이블/낮은 카디널리티는 인덱스 효과가 제한적임을 함께 안내(무분별한 인덱스 추가 방지). **단 규모 정보가 없으면(SCHEMA-PARTIAL, 통계 없음) 테이블명(`tb_admin_*` 등 명명 규칙)만으로 "소형"이라 단정하지 말고 "규모 미확인"으로 표기**한다 - 명명은 규모의 근거가 아니다.
 - 최종 확증은 Tier3 `EXPLAIN`(`--db`)으로: before/after 실행계획을 근거로 첨부.
 
 ## 6. 리포트 반영
