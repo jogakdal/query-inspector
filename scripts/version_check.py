@@ -83,6 +83,22 @@ def read_json(path):
         return {}
 
 
+def _cache_dir():
+    """업데이트 체크 캐시를 둘 사용자 캐시 디렉토리(프로젝트 밖).
+
+    프로젝트의 report.dir 아래에 두면 Stage 0 이전에 미추적 `docs/...`가 생겨
+    git status를 오염시키고, state.shared=true일 때 .gitignore(*)와도 충돌한다.
+    원격 버전 캐시는 프로젝트와 무관하므로 사용자 캐시에 둔다(XDG/LOCALAPPDATA 존중).
+    """
+    base = os.environ.get("XDG_CACHE_HOME")
+    if not base:
+        if sys.platform == "win32":
+            base = os.environ.get("LOCALAPPDATA") or os.path.join(os.path.expanduser("~"), "AppData", "Local")
+        else:
+            base = os.path.join(os.path.expanduser("~"), ".cache")
+    return os.path.join(base, "query-inspector")
+
+
 def detect_method(skill_dir):
     """설치 방식 감지 → 'plugin' | 'skill'."""
     if os.environ.get("CLAUDE_PLUGIN_ROOT"):
@@ -140,7 +156,7 @@ def main() -> int:
     ap = argparse.ArgumentParser(prog="version_check.py",
         description="설치 방식 감지 + 원격 최신 버전 확인 + (스킬 방식) self-update")
     ap.add_argument("--skill-dir", required=True, help="${CLAUDE_SKILL_DIR}")
-    ap.add_argument("--report-dir", default="docs/query-inspector", help="체크 상태 저장 위치")
+    ap.add_argument("--report-dir", default="docs/query-inspector", help="(호환 유지; 업데이트 체크 캐시는 사용자 캐시 디렉토리에 저장)")
     ap.add_argument("--repo", default=os.environ.get("QT_REPO_URL", DEFAULT_REPO))
     ap.add_argument("--force", action="store_true", help="하루 1회 제한 무시")
     ap.add_argument("--apply", action="store_true", help="스킬 방식 self-update 수행")
@@ -163,7 +179,7 @@ def main() -> int:
     result = {"method": method, "local_version": lver, "checked": False,
               "update_available": False, "remote_version": None, "action": None}
 
-    check_path = os.path.join(args.report_dir, "update-check.json")
+    check_path = os.path.join(_cache_dir(), "update-check.json")   # 프로젝트 밖(사용자 캐시) - git status 오염 방지
     state = read_json(check_path)
 
     # --apply가 아니고, 최근 확인했고, --force도 아니면: 저장된 결과로 판단(원격 재조회 생략)

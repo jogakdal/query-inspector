@@ -45,6 +45,11 @@ MVP 기본 방언. `dialect: auto`가 MySQL로 판정하거나 폴백했을 때,
 - `leading_wildcard_like`: `LIKE '%x%'` -> 접두 검색 가능하면 `'x%'`, 아니면 **FULLTEXT 인덱스**(`MATCH ... AGAINST`) 검토.
 - `large_in_clause`: MySQL은 하드 상한은 아니나 `max_allowed_packet`/플랜 비용 문제 -> 청크/조인.
 - `deep_pagination`: `LIMIT 100000, 20` -> 키셋 `WHERE id < :last ORDER BY id DESC LIMIT 20`.
+- `unbounded_result`(스트리밍 착시 - 엑셀/대량 다운로드의 흔한 OOM 원인): MySQL/Connector-J에서 **"스트림을 쓰니 메모리 안전"이 거짓인 경우가 많다.**
+  - `JdbcTemplate.queryForRowSet(...)`은 `SqlRowSet`(`CachedRowSet` 기반)이라 **결과를 전량 메모리에 적재**한다 - 스트리밍이 아니다.
+  - QueryDSL/JPA `fetch()` 뒤의 `.stream()`도 이미 전량 로드된 리스트의 스트림이라 메모리 절감이 없다.
+  - 진짜 행 단위 스트리밍은 `Statement.setFetchSize(Integer.MIN_VALUE)`(Connector-J 로우 스트리밍) 또는 `useCursorFetch=true` + `setFetchSize(n)`(서버측 커서)에서만 동작한다. 단 서버측 커서는 임시 테이블/커서 비용과 커넥션 장시간 점유가 있어 대량 다운로드엔 역효과일 수 있다 - **페이징/청크 분할을 우선 검토**한다.
+  - "스트림이니 괜찮다"는 가정은 실제 드라이버 동작으로 확인한다(대량일수록 OOM 위험).
 - 힌트: 필요 시 `USE INDEX`/`FORCE INDEX`/`IGNORE INDEX`, 옵티마이저 힌트 `/*+ ... */`(8.0). 남용 금지 - 근거와 함께 제안.
 
 > MariaDB 차이: `EXPLAIN ANALYZE` 문법/JSON 포맷/옵티마이저 힌트 세부가 다를 수 있음. 실행계획 해석은 대동소이하나 버전 확인 후 제안.

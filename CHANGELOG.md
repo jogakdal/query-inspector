@@ -5,6 +5,27 @@
 
 > 플러그인 갱신(`claude plugin update`)은 버전 비교로 동작하므로, 스킬 내용을 바꿀 때는 `plugin.json`/`marketplace.json`의 버전을 함께 올립니다.
 
+## [1.1.1] - 2026-10-12
+
+JVM 주력 스택(Kotlin + JdbcTemplate 래퍼/QueryDSL/JPA) 실무 검증(svc-settle-admin)의 자가 진단을 반영한 판정 정확도/병렬 처리/카탈로그 강화 릴리스.
+
+### Added
+- **`out_of_catalog` 공식화** - 명명된 휴리스틱에 없는 결함(쓰기 트랜잭션 미참여, read replica 라우팅 결함, 트랜잭션 없는 복합 쓰기 등)을 담는 메타 ID. 심각도는 성격별 규칙(정확성/원자성/보안 critical, 성능 warn, 기타 info)으로 판정하고 이름에 구체 패턴을 병기. heuristics/i18n/example 정합. (실무 최상위 결함 3건이 카탈로그 밖이던 문제 대응)
+- **문자열 보간 3단계 판정(native-sql)** - 보간 값의 출처로 심각도를 분기: (a) 상수/enum/정적 빌더 -> 비보고, (b) 타입 강제 값(Int/Long/LocalDate/enum) -> info(인젝션 불가, 플랜 캐시/빈 목록), (c) String 외부 입력 -> critical. 일괄 critical 처리로 생기던 대량 오탐 해소.
+- **`--all` 1회 병렬 브리프 템플릿** - 서브에이전트 공통 브리프(심각도 정책/소유권 규칙/출력 JSON 스키마/`self_diagnosis_notes`)와 테이블 단위 인덱스 통합 설계 규칙을 `state-and-followup.md`에 정의. `--all`이 1회 전체 병렬임을 명시.
+- **프로젝트 고유 DAO 래퍼 탐지(native-sql)** - `JdbcTemplate`/`NamedParameterJdbcTemplate`을 감싸는 자체 래퍼의 public 메서드를 쿼리 진입점으로 등록하는 절차.
+- **Tier2 스키마 후보 출력(collect_diff)** - DDL/스키마 `.sql`(테스트 리소스 포함)을 튜닝 대상과 별개로 `schema-candidates` 섹션에 수집. SCHEMA-PARTIAL 시 `information_schema.STATISTICS` 일괄 확인 SQL을 리포트에 안내.
+
+### Fixed
+- **version_check 캐시의 git status 오염** - 업데이트 체크 캐시(`update-check.json`)를 프로젝트 `docs/query-inspector/`가 아니라 **사용자 캐시 디렉토리**(XDG/LOCALAPPDATA)에 저장. Stage 0 이전에 미추적 `docs/`가 생기고 `.gitignore`가 없어 `git status`가 오염되던 문제와 `state.shared=true`의 `.gitignore` 충돌을 함께 해소.
+- **template 분류 과대** - SPA 셸(`frontend/public/index.html`)/정적·빌드 HTML을 `template`에서 제외(`other`). 서버 렌더 템플릿(`templates/`, `.jinja`)만 N+1 점검 대상으로 유지.
+
+### Changed
+- SCHEMA-PARTIAL `missing_index` 심각도를 `warn`으로 고정(확정 소스 확보 시 critical 승격), 어조를 "미확인 - 확인 필요"로.
+- 반복형 심각도 매트릭스에 "외부 연동 API(빈도 미상)" 열 추가 + `severity_rules`(운영자 고정값) 우선 적용 명시.
+- 리포트 템플릿에 전체 스캔용 범위 문구 분기(변경분 vs 전체), 실행 계획 그룹명 분기(`이번 배포` vs `우선 조치`), 병합 항목 `관련 위치` 필드. 상태 스키마에 `locations[]`/`report_no`.
+- MySQL 방언 노트에 "스트리밍 착시"(`JdbcTemplate.queryForRowSet`=CachedRowSet, QueryDSL `fetch().stream()`=전량 적재) + `useCursorFetch` 비용. 자가 진단에 병렬 메타 수집(`self_diagnosis_notes`) 규칙.
+
 ## [1.1.0] - 2026-10-08
 
 실무 검증(django-oscar, flaskbb)과 각 자가 진단 리포트를 반영한 Python(Django/SQLAlchemy) 커버리지 강화 + 버그 수정 릴리스.

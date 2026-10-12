@@ -22,7 +22,7 @@ allowed-tools: Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/collect_diff.py *), Ba
 
 ```
 /query-inspector:tuning-report                      # 마지막 튜닝 이후 변경분(첫 실행이면 범위 확인)
-/query-inspector:tuning-report --all                # 전체 쿼리 관련 소스 강제(이전 제안 검증 생략)
+/query-inspector:tuning-report --all                # 전체 소스 강제 - 1회 전체 병렬(범위 확인/이전 제안 검증 생략)
 /query-inspector:tuning-report --staged             # staged 변경분만
 /query-inspector:tuning-report --range main..HEAD   # 지정 범위
 /query-inspector:tuning-report --files <경로...>    # 특정 파일만
@@ -100,7 +100,7 @@ python3 ${CLAUDE_PLUGIN_ROOT}/scripts/blame_author.py --file <경로> --lines <n
 ```
 `author`(+`date`)를 "최종 수정자: 이름 (YYYY-MM-DD)"로, `committed:false`면 "미커밋(작업 중)". git 정보 없으면 생략(이메일 기본 생략).
 
-**실행 계획(Action Items)** - 요약 다음. 개발자나 **그 개발자의 AI 에이전트에게 그대로 전달해 착수**할 목록을 심각도 그룹(🔴 이번 배포 필수 / 🟡 곧 / ⚪ 여유)으로. 각 항목: `- [ ]` + 적용 라벨(`[자동적용]`/`[검토후]`/`[확인후]`) + `파일:라인` + 근거 이슈번호 + (가능하면) 복붙용 코드/DDL. 인덱스 추가처럼 안전한 건 `[자동적용]`으로 완성 DDL 제시. 이 목록은 "제안"이며 스킬이 자동 반영하지 않는다.
+**실행 계획(Action Items)** - 요약 다음. 개발자나 **그 개발자의 AI 에이전트에게 그대로 전달해 착수**할 목록을 심각도 그룹으로 묶는다(증분 실행은 `🔴 이번 배포 필수 / 🟡 곧 / ⚪ 여유`, **`--all`/전체 스캔은 배포 단위가 아니므로 `🔴 우선 조치 / 🟡 곧 / ⚪ 여유` 등 우선순위 그룹명**으로). 각 항목: `- [ ]` + 적용 라벨(`[자동적용]`/`[검토후]`/`[확인후]`) + `파일:라인` + 근거 이슈번호 + (가능하면) 복붙용 코드/DDL. 인덱스 추가처럼 안전한 건 `[자동적용]`으로 완성 DDL 제시. 이 목록은 "제안"이며 스킬이 자동 반영하지 않는다.
 
 **상태 저장** - 리포트 직후 `<report.dir>/tuning-reports/state.json` 갱신(`references/state-and-followup.md`, `collect_diff.py`의 기본 경로와 동일): `last_tuned_commit`=현재 HEAD(+dirty), `last_report`, `updated_at`, `open_suggestions`=미해결 + 새 발견(해결분 제거). **단 `--all`은 처음 실행처럼** 이전 것과 대조/누적하지 않고 이번 발견분으로 새로 기록. 기본 로컬(gitignore), `state.shared: true`면 커밋 대상. `--no-state`면 저장 안 함. **점진 스캔 중이면** `scan_progress`도 갱신(처리 도메인을 `domains_done`으로, 남은 게 없으면 제거 후 baseline 확정). **리포트/상태 커밋 방지:** `state.shared`가 false면 `report.dir`에 `.gitignore`(`*`)가 없으면 생성.
 
