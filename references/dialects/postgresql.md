@@ -53,3 +53,4 @@ PostgreSQL B-Tree는 기본적으로 **`=`와 좌측 고정 `LIKE 'x%'`(C 로케
 - `non_sargable_predicate`: 표현식 인덱스로 해결(MySQL보다 유연, 단 식 일치 필요).
 - `leading_wildcard_like`: `pg_trgm` GIN으로 `%x%` 가속.
 - `deep_pagination`: 키셋 페이징 동일.
+- `random_clustered_pk`(**영향 작음 - 해당 거의 없음**): PostgreSQL은 **힙 테이블**이라 PK가 클러스터드 인덱스가 아니다(행이 PK 순서로 물리 저장되지 않음). 따라서 UUID/랜덤 PK여도 InnoDB 같은 삽입 단편화 문제는 없다. 지적하지 말거나 `info`로 크게 낮춘다(넓은 PK가 보조 인덱스 크기를 키우는 미미한 영향만 언급 가능). `CLUSTER` 명령은 1회성 재정렬이라 지속 효과가 없으므로 근거로 쓰지 않는다.

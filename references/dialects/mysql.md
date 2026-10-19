@@ -50,6 +50,7 @@ MVP 기본 방언. `dialect: auto`가 MySQL로 판정하거나 폴백했을 때,
   - QueryDSL/JPA `fetch()` 뒤의 `.stream()`도 이미 전량 로드된 리스트의 스트림이라 메모리 절감이 없다.
   - 진짜 행 단위 스트리밍은 `Statement.setFetchSize(Integer.MIN_VALUE)`(Connector-J 로우 스트리밍) 또는 `useCursorFetch=true` + `setFetchSize(n)`(서버측 커서)에서만 동작한다. 단 서버측 커서는 임시 테이블/커서 비용과 커넥션 장시간 점유가 있어 대량 다운로드엔 역효과일 수 있다 - **페이징/청크 분할을 우선 검토**한다.
   - "스트림이니 괜찮다"는 가정은 실제 드라이버 동작으로 확인한다(대량일수록 OOM 위험).
+- `random_clustered_pk`(InnoDB 특화 - **영향 큼**): InnoDB는 PK가 클러스터드 인덱스라 행이 PK 순서로 저장된다. UUIDv4/랜덤 PK는 삽입이 중간에 흩어져 **페이지 분할/단편화**가 크고, 모든 보조 인덱스가 PK를 포함해 넓은 PK가 보조 인덱스까지 비대화시킨다. -> `BIGINT AUTO_INCREMENT` PK + UUID는 `UNIQUE` 보조 컬럼, 또는 UUIDv7/ULID(시간정렬), 또는 `BINARY(16)` + `UUID_TO_BIN(uuid, 1)`(시간 접두 재배열). **단조 증가 `AUTO_INCREMENT`/`seq` PK는 권장 사례이므로 지적하지 않는다.**
 - 힌트: 필요 시 `USE INDEX`/`FORCE INDEX`/`IGNORE INDEX`, 옵티마이저 힌트 `/*+ ... */`(8.0). 남용 금지 - 근거와 함께 제안.
 
 > MariaDB 차이: `EXPLAIN ANALYZE` 문법/JSON 포맷/옵티마이저 힌트 세부가 다를 수 있음. 실행계획 해석은 대동소이하나 버전 확인 후 제안.

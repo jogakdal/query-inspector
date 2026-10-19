@@ -5,6 +5,11 @@
 
 > 플러그인 갱신(`claude plugin update`)은 버전 비교로 동작하므로, 스킬 내용을 바꿀 때는 `plugin.json`/`marketplace.json`의 버전을 함께 올립니다.
 
+## [1.3.0] - 2026-10-19
+
+### Added
+- **휴리스틱 ID `random_clustered_pk`** - 랜덤/UUID 값을 클러스터드 PK(InnoDB)로 사용해 삽입 단편화/페이지 분할을 유발하는 패턴(기본 🟡 warn, 방언 의존). **단조 증가 surrogate PK(`AUTO_INCREMENT`/시퀀스/IDENTITY)는 권장 사례이므로 지적하지 않는다**(오탐 방지 - "불필요한 인조키" 자체는 설계 선택이라 검출 대상 아님). 수정 제안은 `BIGINT AUTO_INCREMENT` PK + UUID는 UNIQUE 보조, 또는 UUIDv7/ULID, 또는 `UUID_TO_BIN(uuid,1)`. 방언 노트: MySQL/InnoDB 영향 큼, PostgreSQL은 힙 테이블이라 거의 해당 없음. heuristics/i18n/example 3곳 정합.
+
 ## [1.2.0] - 2026-10-12
 
 svc-settle-batch(Spring Batch 레거시) 점진 스캔 자가 진단을 반영한 레거시/배치 분석 강화 + 점진 스캔 세션 리포트 릴리스.

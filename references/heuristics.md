@@ -429,6 +429,25 @@ WHERE UPPER(name) = 'KIM'
 
 ---
 
+## 26. `random_clustered_pk` - 랜덤/UUID 클러스터드 PK / 기본 🟡 warn / **쓰기 성능**(방언 의존)
+
+클러스터드 인덱스(InnoDB 등)에서 **PK가 단조 증가하지 않는 랜덤 값**(UUIDv4, 랜덤 바이트, 해시)이라, 삽입이 인덱스 중간중간에 일어나 **페이지 분할/단편화/버퍼풀 비효율**을 유발하는 경우. **"인조키(surrogate key) 자체"가 아니라 "랜덤 값을 클러스터드 PK로" 쓰는 것이 문제**다 - `AUTO_INCREMENT`/시퀀스 같은 단조 증가 surrogate PK는 오히려 권장 사례이므로 **지적 대상이 아니다**(오탐 금지).
+
+> **중요(오탐 방지):** 이 ID는 **PK가 랜덤/UUID인 경우에만** 쓴다. 단조 증가 정수 PK(`seq`/`auto_increment`/IDENTITY)나, "자연키 대신 surrogate를 썼다" 같은 설계 선택은 **보고하지 않는다**(자연키의 유일성/불변성은 코드로 알 수 없어 판정 불가). 또한 클러스터드 인덱스가 없는 방언(PostgreSQL은 힙 테이블이라 PK가 클러스터드 아님)에서는 **해당 없음 또는 info로 크게 낮춘다**.
+
+**탐지 신호**
+- PK 컬럼 타입이 `UUID`/`CHAR(36)`/`BINARY(16)`/`VARCHAR`로, 값 생성이 `UUID()`/`uuid4()`/`randomUUID()`/`GenerationType.UUID`/앱단 랜덤이고, 그 컬럼이 **PRIMARY KEY**(= InnoDB 클러스터드).
+- JPA `@Id @GeneratedValue(strategy = UUID)` 또는 `@GeneratedValue` 없이 앱에서 `UUID.randomUUID()`를 PK에 대입.
+
+**왜 문제인가** InnoDB는 PK가 클러스터드 인덱스라 **행이 PK 순서로 물리 저장**된다. 랜덤 PK는 삽입 위치가 매번 달라 페이지 분할·단편화가 커지고, 모든 보조 인덱스가 PK를 포함하므로 **넓은 PK(UUID 16~36B)가 보조 인덱스까지 비대화**시킨다. (PostgreSQL은 힙 저장이라 영향이 작다 - 방언 노트 참조.)
+
+**수정 제안**
+- **단조 증가 PK로 전환**: `BIGINT AUTO_INCREMENT`를 PK로 두고, UUID가 외부 노출/분산 생성 때문에 필요하면 **UNIQUE 보조 컬럼**으로 유지(클러스터드에서 분리).
+- UUID를 꼭 PK로 써야 하면 **시간 정렬 UUID**(UUIDv7/ULID)로 단조성을 확보하거나, MySQL이면 `BINARY(16)` + 바이트 재배열(`UUID_TO_BIN(uuid, 1)`)로 시간 접두를 앞세운다.
+- 방언별 세부는 `dialects/<dialect>.md`.
+
+---
+
 ## ~ `out_of_catalog` - 카탈로그 외 항목(메타) / 심각도 규칙 기반 / **발견 성격에 따름**
 
 이 카탈로그의 명명된 ID 어디에도 들어맞지 않는 결함을 담는 **메타 항목**이다. 실제 리뷰에서 가장 중대한 결함이 여기 해당하는 경우가 있으므로(쓰기 트랜잭션 미참여, 커넥션 라우팅 결함 등), **"카탈로그에 없음"을 "경미함"으로 취급하지 않는다.**

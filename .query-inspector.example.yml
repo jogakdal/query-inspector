@@ -84,6 +84,7 @@ severity_rules:
   replica_routing_defect: critical # read replica 라우팅 결함(정확성/성능) — 의도면 확인 후 하향
   connection_abandon: warn        # 커넥션 강제 회수(풀 abandon 타임아웃 < 배치 쿼리 소요)
   paging_on_mutating_set: critical # 처리로 줄어드는 대상을 OFFSET 페이징 → 행 누락(정확성)
+  random_clustered_pk: warn       # 랜덤/UUID를 클러스터드 PK로(InnoDB 삽입 단편화) — 단조증가 seq/auto_inc은 지적 안 함
   # out_of_catalog(카탈로그 외 항목)는 고정 심각도가 없다 - 발견 성격에 따라 critical/warn/info로 판정(references/heuristics.md 규칙).
   #   일괄 고정이 필요할 때만 여기 지정(예: out_of_catalog: warn). 미지정을 권장한다.
   # 여기 나열되지 않은 ID는 references/heuristics.md의 각 항목 기본 심각도를 따른다.
