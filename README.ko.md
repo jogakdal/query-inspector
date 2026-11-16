@@ -2,7 +2,7 @@
 
 [English](./README.md) | **한국어**
 
-> Query-inspector는 **SQL/ORM 쿼리 튜닝을 수행하는 Claude Code 스킬**로, **두 스킬**을 가진 플러그인입니다.<br> 
+> query-inspector는 **SQL/ORM 쿼리를 튜닝하는 Claude Code 플러그인**으로, **두 개의 스킬**로 구성됩니다.<br> 
 > **`tuning-report`** 는 변경분에 대해 **쿼리 튜닝**을 수행하고(N+1/인덱스 누락/안티패턴), **`inventory-report`** 는 프로젝트가 실행하는 모든 SQL/ORM 쿼리를 목록화합니다.
 
 - 설계 문서: [DESIGN.md](./DESIGN.md)
@@ -13,7 +13,7 @@
 
 ## 스킬 구성
 
-| 스킬 | 호출 | 하는 일                                                                                     |
+| 스킬 | 호출 | 역할                                                                                     |
 |------|------|------------------------------------------------------------------------------------------|
 | **`tuning-report`** | `/query-inspector:tuning-report` | `git` 변경분 또는 프로젝트 전체의 SQL/ORM 쿼리를 추출해 **튜닝** 수행 ([상세 매뉴얼](./MANUAL-tuning-report.ko.md)) |
 | **`inventory-report`** | `/query-inspector:inventory-report` | 프로젝트 쿼리(ORM 생성 포함)를 추출해 **목록**화 ([상세 매뉴얼](./MANUAL-inventory-report.ko.md))              |
@@ -56,6 +56,8 @@
 
 ```bash
 claude plugin marketplace add jogakdal/query-inspector
+#  git 인증(HTTPS 자격증명)이 없어 실패하면 SSH로:
+#  claude plugin marketplace add git@github.com:jogakdal/query-inspector.git
 claude plugin install query-inspector@query-inspector-marketplace
 ```
 
@@ -207,7 +209,7 @@ ORM이 생성한 동적 쿼리는 100% 재구성이 불가능합니다. 그래�
 
 ## 확장 (새 스택 추가)
 
-**Python(Django / SQLAlchemy)** 도 어댑터로 지원하지만 주력 스택만큼 검증되지는 않았습니다(예: `stacks: [python-django]`). **다음 후보는 Node(Prisma/TypeORM)/.NET(EF Core/Dapper)** 이며, 코어 수정 없이 `references/adapters/<stack>.md`만 추가하면 되는 구조라 기여를 환영합니다. -> [references/adapters/_template.md](./references/adapters/_template.md)
+**Python(Django / SQLAlchemy)** 은 1.1.0부터 공식 지원하며 실무 오픈소스(django-oscar, flaskbb)로 검증했습니다. 주력 스택(JVM)만큼 광범위하게 검증하지는 않았습니다(예: `stacks: [python-django]`). **다음 후보는 Node(Prisma/TypeORM)/.NET(EF Core/Dapper)** 이며, 코어 수정 없이 `references/adapters/<stack>.md`만 추가하면 되는 구조라 기여를 환영합니다. -> [references/adapters/_template.md](./references/adapters/_template.md)
 
 기여 환영 - [CONTRIBUTING.md](./CONTRIBUTING.md) 참고.
 

@@ -12,6 +12,8 @@
 ```bash
 # 플러그인 설치 (공개 마켓플레이스에서)
 claude plugin marketplace add jogakdal/query-inspector
+#  git 인증(HTTPS 자격증명)이 없어 실패하면 SSH로:
+#  claude plugin marketplace add git@github.com:jogakdal/query-inspector.git
 claude plugin install query-inspector@query-inspector-marketplace
 
 # 또는 설치 스크립트 (저장소 clone 후)
@@ -24,7 +26,7 @@ bash query-inspector-setup.sh --local      # 이 체크아웃을 마켓 소스�
 
 ---
 
-## 플러그인 전용 (`--skill` 복사 방식이 없는 이유)
+## 플러그인 전용 설치 (`--skill` 복사 방식 부재)
 
 query-inspector는 스킬 폴더를 손으로 복사하는 방식이 아니라 **플러그인으로** 설치합니다. 두 스킬(`tuning-report`/`inventory-report`)이 `references/`/`scripts/`/`assets/`를 `${CLAUDE_PLUGIN_ROOT}`로 공유하고, 둘 다 `/query-inspector:` 네임스페이스로 호출됩니다. 이 구조는 Claude Code가 플러그인으로 로드할 때만 해석되므로, 스킬 폴더 하나를 `~/.claude/skills/`에 복사하면 공유 자산 경로와 네임스페이스가 깨집니다. 그래서 스킬 복사 설치는 제공하지 않습니다.
 
@@ -70,10 +72,9 @@ bash query-inspector-setup.sh --local      # 이 체크아웃을 마켓 소스�
 
 ```bash
 # 1) 이 저장소를 마켓플레이스로 등록
-claude plugin marketplace add https://github.com/jogakdal/query-inspector
-#    (공개 저장소는 owner/repo 축약형도 됩니다: jogakdal/query-inspector)
-#    비공개 저장소: SSH URL을 대신 사용 -
-#    claude plugin marketplace add git@github.com:jogakdal/query-inspector.git
+claude plugin marketplace add jogakdal/query-inspector
+#    GitHub은 owner/repo 축약형을 지원합니다. 다른 git 호스트는 clone URL(.git)을 쓰세요.
+#    SSH를 쓰려면: claude plugin marketplace add git@github.com:jogakdal/query-inspector.git
 
 # 2) 플러그인 설치
 claude plugin install query-inspector@query-inspector-marketplace -y --scope user
@@ -98,7 +99,7 @@ claude plugin install query-inspector@query-inspector-marketplace -y --scope use
 
 이것이 `query-inspector-setup.sh --local`이 하는 일 그대로입니다 - 어디에도 push하지 않고 수정판/오프라인 빌드를 돌릴 때 쓰세요. 호출은 `/query-inspector:tuning-report`.
 
-> **왜 스킬 폴더만이 아니라 체크아웃 전체를 등록하나요?**<br>
+> **체크아웃 전체를 등록하는 이유**<br>
 > 두 스킬(`tuning-report`/`inventory-report`)이 `references/`/`scripts/`/`assets/`를 `${CLAUDE_PLUGIN_ROOT}`로 공유하고, 둘 다 `/query-inspector:` 네임스페이스 아래에 있습니다 - 이 구조는 트리를 플러그인으로 로드할 때만 해석됩니다.
 
 ---

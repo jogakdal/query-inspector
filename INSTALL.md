@@ -12,6 +12,8 @@
 ```bash
 # Install the plugin (from the public marketplace)
 claude plugin marketplace add jogakdal/query-inspector
+#  If git auth (HTTPS credentials) is missing and it fails, use SSH:
+#  claude plugin marketplace add git@github.com:jogakdal/query-inspector.git
 claude plugin install query-inspector@query-inspector-marketplace
 
 # Or via the setup script (after cloning the repo)
@@ -70,10 +72,9 @@ The setup script is just a wrapper around the steps below - do them by hand if y
 
 ```bash
 # 1) Register this repo as a marketplace
-claude plugin marketplace add https://github.com/jogakdal/query-inspector
-#    (a public repo also accepts the owner/repo shorthand: jogakdal/query-inspector)
-#    Private repo: use the SSH URL instead -
-#    claude plugin marketplace add git@github.com:jogakdal/query-inspector.git
+claude plugin marketplace add jogakdal/query-inspector
+#    GitHub supports the owner/repo shorthand. Other git hosts need the clone URL (.git).
+#    To use SSH: claude plugin marketplace add git@github.com:jogakdal/query-inspector.git
 
 # 2) Install the plugin
 claude plugin install query-inspector@query-inspector-marketplace -y --scope user

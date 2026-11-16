@@ -60,6 +60,6 @@ Each item below is summarized here and covered in full in each skill's manual.
 
 - **[MANUAL-tuning-report.md](./MANUAL-tuning-report.md)** - tuning usage, options, 3 tiers, Tier 3 live-DB EXPLAIN, report format, configuration, FAQ.
 - **[MANUAL-inventory-report.md](./MANUAL-inventory-report.md)** - inventory usage, options, the catalog pipeline, index coverage, report format, configuration, FAQ.
-- **[INSTALL.md](./INSTALL.md)** - plugin vs. skill, manual install, verification.
+- **[INSTALL.md](./INSTALL.md)** - plugin-only install, manual install, verification.
 
 The full heuristics catalog and design live in `references/` and [DESIGN.md](./DESIGN.md).

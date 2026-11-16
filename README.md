@@ -2,7 +2,7 @@
 
 **English** | [한국어](./README.ko.md)
 
-> query-inspector is a **Claude Code skill for SQL and ORM query tuning**, packaged as a plugin with **two skills**.<br>
+> query-inspector is a **Claude Code plugin for SQL and ORM query tuning**, made up of **two skills**.<br>
 > **`tuning-report`** performs **query tuning** on the queries in your changes (N+1s, missing indexes, anti-patterns), and **`inventory-report`** catalogs every SQL/ORM query the project runs.
 
 - Design doc: [DESIGN.md](./DESIGN.md)
@@ -56,6 +56,8 @@ Full guardrails: [DESIGN.md section 7](./DESIGN.md).
 
 ```bash
 claude plugin marketplace add jogakdal/query-inspector
+#  If git auth (HTTPS credentials) is missing and it fails, use SSH:
+#  claude plugin marketplace add git@github.com:jogakdal/query-inspector.git
 claude plugin install query-inspector@query-inspector-marketplace
 ```
 
@@ -207,7 +209,7 @@ ORM dynamic queries can't be reconstructed 100%. So every inferred query carries
 
 ## Extending (new stacks)
 
-**Python (Django / SQLAlchemy)** ships adapters too, though not as thoroughly validated as the primary stacks (e.g. `stacks: [python-django]`). **Node (Prisma/TypeORM) and .NET (EF Core/Dapper) are the next candidates**; the adapter structure lets them be added without touching the core (just `references/adapters/<stack>.md`), so contributions are welcome. -> [references/adapters/_template.md](./references/adapters/_template.md)
+**Python (Django / SQLAlchemy)** is officially supported as of 1.1.0, validated against real open-source projects (django-oscar, flaskbb) - though not as broadly as the primary JVM stacks (e.g. `stacks: [python-django]`). **Node (Prisma/TypeORM) and .NET (EF Core/Dapper) are the next candidates**; the adapter structure lets them be added without touching the core (just `references/adapters/<stack>.md`), so contributions are welcome. -> [references/adapters/_template.md](./references/adapters/_template.md)
 
 Contributions welcome - see [CONTRIBUTING.md](./CONTRIBUTING.md).
 
