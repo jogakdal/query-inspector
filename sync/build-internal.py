@@ -36,17 +36,60 @@ for _s in (sys.stdout, sys.stderr):
 HERE = os.path.dirname(os.path.abspath(__file__))
 PUBLIC_ROOT = os.path.dirname(HERE)
 
-# 내부 배포판에서 제외: 생성 도구(sync) + 영어 원본 문서(한국어본이 승격 대체).
-# LICENSE/CONTRIBUTING은 포함한다(사내판 README가 링크하므로).
+# 내부 배포판에서 제외: 생성 도구(sync) + 영어 원본 문서(한국어본이 승격 대체) + LICENSE(사내판 라이선스 미표기).
+# CONTRIBUTING은 포함하되 라이선스 섹션만 제거한다(strip_license).
 EXCLUDE_DIRS = {".git", "sync"}
 EXCLUDE_FILES = {"README.md", "MANUAL.md", "INSTALL.md",
-                 "MANUAL-tuning-report.md", "MANUAL-inventory-report.md"}
+                 "MANUAL-tuning-report.md", "MANUAL-inventory-report.md",
+                 "LICENSE"}
 # 한국어본을 내부 기본 문서로 승격(내부는 한국어 단일): README.ko.md → README.md
 PROMOTE = {"README.ko.md": "README.md", "MANUAL.ko.md": "MANUAL.md", "INSTALL.ko.md": "INSTALL.md",
            "MANUAL-tuning-report.ko.md": "MANUAL-tuning-report.md",
            "MANUAL-inventory-report.ko.md": "MANUAL-inventory-report.md"}
 # 언어 스위처 줄(제거)
 SWITCHER_RE = re.compile(r'^\s*(\*\*English\*\*\s*\|\s*\[한국어\].*|\[English\].*\|\s*\*\*한국어\*\*\s*)$')
+
+# 사내판은 라이선스 관련 언급/정보를 전부 뺀다(사내 전용 도구).
+#  - LICENSE 파일: EXCLUDE_FILES로 제외.
+#  - README/CONTRIBUTING의 라이선스 섹션: 블록 삭제(선행 --- 구분선 포함, 문서 끝까지).
+# 기여(CONTRIBUTING) 링크는 라이선스가 아니므로 건드리지 않는다.
+LICENSE_SECTION_RE = re.compile(r'\n(?:[ \t]*\n)?(?:---[ \t]*\n[ \t]*\n)?#+[ \t]*(?:라이선스|License)\b.*?(?=\n#+[ \t]|\Z)', re.S)
+
+
+def strip_license(text):
+    """라이선스 섹션(선행 --- 구분선 포함)을 제거한다. 섹션이 문서 끝이면 끝까지."""
+    out = LICENSE_SECTION_RE.sub("", text)
+    return out.rstrip() + "\n"   # 섹션 삭제로 사라진 파일 끝 개행 복원
+
+
+# 사내 전용 추가 블록: 생성 트리의 문서 끝에 이 디렉토리의 같은 이름 파일을 덧붙인다.
+#  - 공개판엔 불필요하고 사내판에만 필요한 안내(구 버전 재설치 등)를 공개 문서를 건드리지 않고 추가.
+#  - 파일명은 "생성 후" 이름(승격/치환 반영, 예: INSTALL.md). 내용은 사내 식별자로 이미 채워진 상태로 그대로 덧붙인다.
+#  - gitignore라 공개 저장소엔 올라가지 않는다. 틀은 internal-append.example/ 참고.
+APPEND_DIR = os.path.join(HERE, "internal-append")
+
+
+def apply_appends(out):
+    """APPEND_DIR의 각 파일을 생성 트리(out)의 같은 경로 문서 끝에 덧붙인다. 반환: 덧붙인 파일 수."""
+    if not os.path.isdir(APPEND_DIR):
+        return 0
+    n = 0
+    for root, _dirs, files in os.walk(APPEND_DIR):
+        for fn in files:
+            src = os.path.join(root, fn)
+            rel = os.path.relpath(src, APPEND_DIR)
+            dst = os.path.join(out, rel)
+            if not os.path.isfile(dst):
+                sys.stderr.write(f"  ⚠️ append 대상 없음(건너뜀): {rel}\n")
+                continue
+            with open(src, encoding="utf-8") as f:
+                add = f.read()
+            with open(dst, encoding="utf-8") as f:
+                base = f.read()
+            with open(dst, "w", encoding="utf-8") as f:
+                f.write(base.rstrip() + "\n" + add.rstrip() + "\n")
+            n += 1
+    return n
 
 
 def load_profile(path):
@@ -129,6 +172,10 @@ def main():
             # 치환(공개값→내부값)
             for a, b in pairs:
                 text = text.replace(a, b)
+            # 라이선스 섹션(README/CONTRIBUTING) 삭제 - 사내판은 라이선스 미표기
+            base = os.path.basename(dst_rel)
+            if base in ("README.md", "CONTRIBUTING.md"):
+                text = strip_license(text)
             # 네임스페이스
             is_manifest = relpath.endswith(".json") and ".claude-plugin" in root
             text = apply_namespace(text, ns, is_manifest)
@@ -136,9 +183,12 @@ def main():
             copied += 1
             if text != orig: subst_files += 1
 
+    # 사내 전용 추가 블록(구 버전 재설치 안내 등)을 해당 문서 끝에 덧붙임
+    appended = apply_appends(out)
+
     # 점검: 내부값으로 잘 바뀌었는지 + 공개값/placeholder 잔존 없는지
     print(f"[build-internal] 생성 완료 → {out}")
-    print(f"  파일 복사 {copied} · 문서 승격 {promoted} · 치환 발생 {subst_files}")
+    print(f"  파일 복사 {copied} · 문서 승격 {promoted} · 치환 발생 {subst_files} · 추가블록 {appended}")
     leaks = []
     for root, dirs, files in os.walk(out):
         for fn in files:

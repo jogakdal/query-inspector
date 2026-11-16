@@ -22,6 +22,9 @@ query-inspector-marketplace ||| your-marketplace
 git@github.com:jogakdal/query-inspector.git ||| git@your-git-host:org/repo.git
 https://github.com/jogakdal/query-inspector ||| https://your-git-host/org/repo
 https://raw.githubusercontent.com/jogakdal/query-inspector ||| https://your-git-host/org/repo/raw
+# owner/repo 축약형은 GitHub 전용 문법 — GitHub이 아닌 호스트(Bitbucket/GitLab 등)에서는 전체 URL로 치환.
+# 위 전체 URL 매핑이 먼저 처리되므로 이 축약형 매핑은 그 URL을 깨지 않습니다(긴 값 우선 정렬).
+jogakdal/query-inspector ||| https://your-git-host/org/repo
 
 # 저자(매니페스트 author 등)
 Yongho Hwang(황용호) ||| Your Org

@@ -6,8 +6,9 @@ CLAUDE.md
 .query-inspector.yml
 .env
 
-# 사내 동기화 프로파일(사내 고유값 — 공개 저장소에 커밋 금지). 형식은 internal.profile.example 참고
+# 사내 동기화 프로파일/추가블록(사내 고유값 — 공개 저장소에 커밋 금지). 형식은 *.example 참고
 sync/internal.profile
+sync/internal-append/
 
 # 생성 리포트 + 상태(state.shared:true면 state.json은 예외적으로 커밋)
 docs/query-inspector/
