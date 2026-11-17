@@ -23,7 +23,7 @@ query-inspector의 두 스킬 중 하나인 **`tuning-report`** 의 상세 매�
 
 ### 주요 기능
 - **주요 표적**: 
-  - 인덱스 누락(바로 쓸 수 있는 `CREATE INDEX` 제안)
+  - 인덱스 누락(바로 적용할 수 있는 `CREATE INDEX` 제안)
   - N+1 조회
   - 흔한 안티패턴(인덱스 무력화 조건 / 선행 와일드카드 `LIKE '%..'` / 방언 불일치 문법 / 불필요한 `SELECT *` 등)
 - **증분 + 이전 제안 검증**: 지난 제안이 실제 수정 및 반영이 되었는지를 파악합니다. 이전 제안에 대한 검증은 이번에 수정되지 않은 파일도 대상이 됩니다.
@@ -120,14 +120,14 @@ claude
   - `--db <profile>`은 실 DB EXPLAIN(Tier 3)을 켭니다. `<profile>`은 `.query-inspector.yml`의 `db.profiles`에 정의한 이름입니다(설정과 동작은 [7절](#7-tier-3---실-db-explain-선택)).
   - `--dialect`는 방언 자동 감지 대신 방언을 직접 지정합니다.
 - **상태(증분)** (`--no-state` / `--reset-state`):
-  - `--no-state`는 상태 파일을 읽지도 쓰지도 않는 1회성 실행입니다.
+  - `--no-state`는 상태 파일을 읽지도 기록하지도 않는 1회성 실행입니다.
   - `--reset-state`는 상태를 초기화합니다(다음 실행할 때 전체 스캔).
 - **출력 / 기타** (`--lang` / `--no-update-check` / `--version` / `--help`):
   - `--lang`은 출력 언어를 고정합니다(기본은 `report.language=auto`).
   - `--no-update-check`는 이번 실행에서 새 버전 확인을 건너뜁니다.
   - `--version` / `--help`는 버전 / 도움말을 출력하고 종료합니다.
 
-**자주 쓰는 조합**
+**자주 사용하는 조합**
 - 이전 수행과 무관하게 **매번 전체**: `--all`(상태도 안 남기려면 `--all --no-state`).
 - 브랜치 리뷰: `--range main..HEAD`.
 - 특정 실행을 실 실행계획으로 심화: `--db <profile>`([7절](#7-tier-3---실-db-explain-선택)).
@@ -227,7 +227,7 @@ db:
 ### 접속 정보 조달(우선순위)
 1. 프로파일 `url_env` 환경변수(스킬이 `.env` 자동 로드)
 2. **프로젝트 datasource 설정 자동 추출**:
-   - `application.yml`/`.properties`(및 `application-{local,dev}.*`)의 `spring.datasource.*`(또는 `r2dbc.*`)에서 자동으로 읽어 씁니다(운영 설정 `application-prod*`는 제외). 
+   - `application.yml`/`.properties`(및 `application-{local,dev}.*`)의 `spring.datasource.*`(또는 `r2dbc.*`)에서 자동으로 읽어 사용합니다(운영 설정 `application-prod*`는 제외). 
    - **접속 전에 "host:port/db로 진행할까요?"를 확인**합니다.
 3. 그래도 없으면 스킬이 **준비 후 다시 실행하도록 안내**합니다(보안상 **비밀번호를 대화창에서 직접 받지 않음**). 사용자는 아래 중 하나로 미리 준비합니다:
    - **`.env`에 저장(권장)**: **터미널에서** `python3 scripts/set_db_credential.py --var QT_DEV_DB_URL`(Windows는 `python`/`py`). 접속 URL을 **숨김 입력**으로 받아 `.env`에 저장합니다(숨김 입력이라 실제 터미널이 필요하며, claude의 비대화형 실행에서는 거부됩니다).

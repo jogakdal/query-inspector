@@ -30,7 +30,7 @@ bash query-inspector-setup.sh --local      # 이 체크아웃을 마켓 소스�
 
 query-inspector는 스킬 폴더를 손으로 복사하는 방식이 아니라 **플러그인으로** 설치합니다. 두 스킬(`tuning-report`/`inventory-report`)이 `references/`/`scripts/`/`assets/`를 `${CLAUDE_PLUGIN_ROOT}`로 공유하고, 둘 다 `/query-inspector:` 네임스페이스로 호출됩니다. 이 구조는 Claude Code가 플러그인으로 로드할 때만 해석되므로, 스킬 폴더 하나를 `~/.claude/skills/`에 복사하면 공유 자산 경로와 네임스페이스가 깨집니다. 그래서 스킬 복사 설치는 제공하지 않습니다.
 
-저장소를 clone/포크했거나 오프라인/수정판을 설치하려면 **`--local`** 을 사용해 주시기 바랍니다. 로컬 체크아웃을 마켓 소스로 등록해 거기서 플러그인을 설치합니다 - 결과는 동일하고 네트워크가 필요 없습니다.
+저장소를 clone/포크했거나 오프라인/수정판을 설치하려면 **`--local`** 을 사용해 주시기 바랍니다. 로컬 체크아웃을 마켓 소스로 등록해 그 소스에서 플러그인을 설치합니다. 결과는 동일하고 네트워크가 필요 없습니다.
 
 ---
 
@@ -54,7 +54,7 @@ bash query-inspector-setup.sh --local      # 이 체크아웃을 마켓 소스�
 
 - **기본** - 공개 마켓플레이스(`jogakdal/query-inspector`)를 등록하고 플러그인을 개인 글로벌로 설치합니다.
 - **`--project [DIR]`** - 한 프로젝트에만 설치합니다(`--scope local`). 프로젝트 루트에서 실행하거나 경로를 전달합니다.
-- **`--local`** - 스크립트가 있는 디렉토리를 마켓으로 등록하고(그 안에 `.claude-plugin/marketplace.json`이 있어야 함) 거기서 설치합니다. `--project`와 함께 쓰면 체크아웃에서 바로 프로젝트 로컬 설치가 됩니다.
+- **`--local`** - 스크립트가 있는 디렉토리를 마켓으로 등록하고(그 안에 `.claude-plugin/marketplace.json`이 있어야 함) 그 디렉토리에서 설치합니다. `--project`와 함께 사용하면 체크아웃에서 바로 프로젝트 로컬 설치가 됩니다.
 
 새 세션에서 `/query-inspector:tuning-report` 또는 `/query-inspector:inventory-report`로 호출합니다.
 

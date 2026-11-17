@@ -375,7 +375,7 @@ description: >-
 
 - `query-inspector-setup.sh`는 플러그인 방식으로만 설치한다(멀티스킬 + 공유 자산 + `/query-inspector:` 네임스페이스 구조라, 스킬 폴더 직접 복사는 공유 자산 경로/네임스페이스가 맞지 않아 지원하지 않음).
   - **기본**: 공개 마켓플레이스(`query-inspector-marketplace`, `.claude-plugin/marketplace.json`)를 등록하고 `query-inspector` 플러그인을 설치한다. 호출은 `/query-inspector:tuning-report`, 갱신은 `claude plugin update query-inspector@query-inspector-marketplace`(재시작). 스크립트 한 파일만으로 동작한다.
-  - **`--local`**: 로컬 체크아웃(clone/포크/오프라인/수정판)을 마켓 소스로 등록해 거기서 설치한다(수동 등가물: `claude plugin marketplace add ./<checkout>`). `--project`와 함께 사용하면 프로젝트 로컬 설치.
+  - **`--local`**: 로컬 체크아웃(clone/포크/오프라인/수정판)을 마켓 소스로 등록해 그 소스에서 설치한다(수동 등가물: `claude plugin marketplace add ./<checkout>`). `--project`와 함께 사용하면 프로젝트 로컬 설치.
 - 팀 온보딩 문서 + `.query-inspector.example.yml` 제공. 방언/심각도 규칙은 프로젝트별 `.query-inspector.yml`로 오버라이드.
 - 설치/사용법 상세: [MANUAL.md](./MANUAL.md)(공식 사용자 매뉴얼).
 
@@ -432,7 +432,7 @@ v1.0.0(현재)은 수동 호출, 3-Tier(정적 -> 스키마 -> 실 DB EXPLAIN)�
 
 ## 16. 증분 튜닝 & 이전 제안 검증
 
-수동 스킬이 staged diff만 보면 **누락**(이미 커밋됐으나 미튜닝, 여러 커밋에 걸친 변경)이 생긴다. 이를 없애기 위해 **상태 기반 증분**으로 동작한다.
+수동 스킬이 staged diff만 보면 **누락**(이미 커밋됐으나 미튜닝, 여러 커밋에 걸친 변경)이 생긴다. 누락을 없애기 위해 **상태 기반 증분**으로 동작한다.
 
 - **대상 범위:** 기본은 "마지막 튜닝 이후"(상태의 `last_tuned_commit` 이후 커밋분 + 미커밋 + 새 파일). **첫 실행이면 사용자에게 범위 확인**(최근 커밋 / 특정 경로 / 전체). `--all`/`--staged`/`--range`로 오버라이드.
 - **이전 제안 검증(follow-up):** 지난 `open_suggestions`를 현재 코드/스키마와 대조해 반영 여부를 판정(✅해결 / ⚠️미반영/리마인드 / ❓확인필요). 제안 지문은 `<id>|<scope>|<target>`(라인 제외).
