@@ -215,7 +215,6 @@ ORM이 생성한 동적 쿼리는 100% 재구성이 불가능합니다. 그래�
 ## 확장 (새 스택 추가)
 
 **Python(Django / SQLAlchemy)** 은 1.1.0에 추가된 첫 확장 스택으로, 실무 오픈소스 프로젝트로 검증했습니다.
-설정에서 `stacks: [python-django]`처럼 대상 스택을 명시할 수 있습니다.
 
 **다음 후보는 Node(Prisma/TypeORM) / .NET(EF Core/Dapper)** 입니다.
 코어 수정 없이 `references/adapters/<stack>.md`만 추가하면 되는 구조라 기여를 환영합니다. -> [references/adapters/_template.md](./references/adapters/_template.md)
