@@ -71,6 +71,24 @@ def strip_contrib_link(text):
     return CONTRIB_LINE_RE.sub("", text)
 
 
+# DESIGN.md의 디렉토리 트리는 공개판 저장소 구조를 그린다. 사내판은 생성 도구(sync/), LICENSE,
+# CONTRIBUTING이 없고 문서가 한국어 단일이므로, 트리의 해당 줄을 사내판 실제 구조로 보정한다.
+#   치환 전에 호출해야 setup 스크립트명(원문 query-inspector-setup)으로 마지막 줄 커넥터를 매칭한다.
+def fix_internal_doc_tree(text):
+    # 문서 줄: "영어 정본 + 한국어본"(.ko.md 병기)을 한국어 단일로
+    text = re.sub(
+        r"(├── README\.md / MANUAL\.md / MANUAL-\{tuning,inventory\}-report\.md) \(\+ \.ko\.md\) +# 영어 정본 \+ 한국어본",
+        r"\1   # 한국어 문서", text)
+    # LICENSE, CONTRIBUTING 제거(사내판 미포함)
+    text = text.replace("├── CHANGELOG.md / LICENSE / CONTRIBUTING.md", "├── CHANGELOG.md")
+    # sync/(생성 도구) 줄 제거 + 직전 줄을 트리 마지막 커넥터(└──)로 보정
+    text = re.sub(
+        r"├── (query-inspector-setup\.sh / \.bat +# 설치 스크립트\(mac/linux / Windows\))\n"
+        r"└── sync/ +# 내부 배포판 생성 도구\(build-internal\)\n",
+        r"└── \1\n", text)
+    return text
+
+
 # 사내 전용 추가 블록: 생성 트리의 문서 끝에 이 디렉토리의 같은 이름 파일을 덧붙인다.
 #  - 공개판엔 불필요하고 사내판에만 필요한 안내(구 버전 재설치 등)를 공개 문서를 건드리지 않고 추가.
 #  - 파일명은 "생성 후" 이름(승격/치환 반영, 예: INSTALL.md). 내용은 사내 식별자로 이미 채워진 상태로 그대로 덧붙인다.
@@ -178,6 +196,9 @@ def main():
                 # 한국어본 상호링크(.ko.md)는 승격 후 .md 파일명을 가리키도록 되돌린다.
                 text = text.replace(".ko.md", ".md")
                 promoted += 1
+            # DESIGN.md 디렉토리 트리를 사내판 실제 구조로 보정(치환 전: setup 스크립트명이 원문이어야 커넥터 매칭)
+            if relpath == "DESIGN.md":
+                text = fix_internal_doc_tree(text)
             # 치환(공개값→내부값)
             for a, b in pairs:
                 text = text.replace(a, b)
@@ -205,7 +226,8 @@ def main():
             try:
                 with open(p, encoding="utf-8") as f: s = f.read()
             except Exception: continue
-            for pat in ("jogakdal", "github.com/jogakdal", "query-inspector-marketplace"):
+            for pat in ("jogakdal", "github.com/jogakdal", "query-inspector-marketplace",
+                        "build-internal", "내부 배포판 생성"):
                 if pat in s:
                     leaks.append(f"{os.path.relpath(p, out)}: '{pat}'")
             if re.search(r"<<[A-Z_]+>>", s):     # 실제 placeholder만(heredoc <<EOF 오탐 제외)
