@@ -52,7 +52,7 @@ Full guardrails: [DESIGN.md section 7](./DESIGN.md).
 
 ## Install
 
-**Install with the `claude` CLI** — register the marketplace and install.
+**Install with the `claude` CLI** - register the marketplace and install.
 
 ```bash
 claude plugin marketplace add jogakdal/query-inspector
@@ -77,7 +77,12 @@ After install, invoke in a new session with `/query-inspector:tuning-report` or 
   - Registers your cloned/forked checkout as the marketplace and installs from it - for offline or modified builds, no network.
   - There is no skill-copy install: the two skills share assets under the `/query-inspector:` namespace, which only resolves when the tree is loaded as a plugin.
 
-**Updating an existing install.** Run `claude plugin update query-inspector@query-inspector-marketplace`, then restart Claude Code or run `/reload-plugins` to apply. This fetches the latest from the marketplace over HTTPS (no SSH key needed). **Auto-update is off by default** for this marketplace (as for any non-official one), so a new version is not pulled automatically unless you opt in — enable it in `/plugin` → Marketplaces → `query-inspector-marketplace`.
+**Updating an existing install.**
+Run `claude plugin update query-inspector@query-inspector-marketplace`, then restart Claude Code or run `/reload-plugins` to apply.
+This fetches the latest from the marketplace over HTTPS (no SSH key needed).
+
+**Auto-update is off by default** for this marketplace (as for any non-official one).
+A new version is not pulled automatically unless you opt in - enable it in `/plugin` -> Marketplaces -> `query-inspector-marketplace`.
 
 Full install guide (method comparison, manual install): **[INSTALL.md](./INSTALL.md)** <br>
 Usage, config, troubleshooting: overview **[MANUAL.md](./MANUAL.md)** or the per-skill manuals above.
@@ -209,7 +214,10 @@ ORM dynamic queries can't be reconstructed 100%. So every inferred query carries
 
 ## Extending (new stacks)
 
-**Python (Django / SQLAlchemy)** is officially supported as of 1.1.0, validated against real open-source projects (django-oscar, flaskbb) - though not as broadly as the primary JVM stacks (e.g. `stacks: [python-django]`). **Node (Prisma/TypeORM) and .NET (EF Core/Dapper) are the next candidates**; the adapter structure lets them be added without touching the core (just `references/adapters/<stack>.md`), so contributions are welcome. -> [references/adapters/_template.md](./references/adapters/_template.md)
+**Python (Django / SQLAlchemy)** is officially supported as of 1.1.0, validated against real open-source projects (django-oscar, flaskbb) - though not as broadly as the primary JVM stacks (e.g. `stacks: [python-django]`).
+
+**Node (Prisma/TypeORM) and .NET (EF Core/Dapper) are the next candidates.**
+The adapter structure lets them be added without touching the core (just `references/adapters/<stack>.md`), so contributions are welcome. -> [references/adapters/_template.md](./references/adapters/_template.md)
 
 Contributions welcome - see [CONTRIBUTING.md](./CONTRIBUTING.md).
 
