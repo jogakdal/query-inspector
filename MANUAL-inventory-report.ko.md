@@ -4,7 +4,7 @@
 
 query-inspector의 두 스킬 중 하나인 **`inventory-report`** 매뉴얼입니다.<br> 
 **프로젝트의 쿼리(ORM이 생성할 쿼리 포함)를 추출해 목록(카탈로그)으로** 만듭니다. **튜닝이 아니라 목록화**를 수행합니다.<br> 
-안티패턴 분석과 수정 제안이 필요하면 **[`tuning-report`](./MANUAL-tuning-report.ko.md)** 스킬을 사용하세요.
+안티패턴 분석과 수정 제안이 필요하면 **[`tuning-report`](./MANUAL-tuning-report.ko.md)** 스킬을 사용해 주시기 바랍니다.
 
 > 두 스킬 개요: [MANUAL.ko.md](./MANUAL.ko.md)<br>
 > 소개: [README.ko.md](./README.ko.md)<br>
@@ -32,7 +32,7 @@ Kotlin/Java + MyBatis / 네이티브 SQL / JPA/Hibernate(파생 메서드 / `@Qu
 
 ## 2. 설치
 
-query-inspector는 플러그인으로 설치합니다(스킬 복사 설치는 없음 - 두 스킬이 자산을 한 네임스페이스 아래에서 공유). 공개 마켓 대신 내 체크아웃에서 설치하려면 `--local`을 쓰세요.
+query-inspector는 플러그인으로 설치합니다(스킬 복사 설치는 지원하지 않습니다 - 두 스킬이 자산을 한 네임스페이스 아래에서 공유). 공개 마켓 대신 내 체크아웃에서 설치하려면 `--local`을 사용합니다.
 
 ```bash
 bash query-inspector-setup.sh              # 개인 글로벌(기본) -> /query-inspector:inventory-report
@@ -40,7 +40,7 @@ bash query-inspector-setup.sh --project    # 프로젝트 로컬(이 프로젝�
 bash query-inspector-setup.sh --local      # 이 체크아웃에서 설치(clone/포크/오프라인)
 ```
 **Windows**에서는 같은 옵션으로 `query-inspector-setup.bat`을 실행합니다.<br> 
-`--project`로 설치하실 때는 대상 프로젝트 루트에서 실행하세요(다른 위치면 `--project <경로>`).
+`--project`로 설치할 때는 대상 프로젝트 루트에서 실행해 주시기 바랍니다(다른 위치면 `--project <경로>`).
 
 **요구사항:** 
 - `git`
@@ -146,7 +146,7 @@ bash query-inspector-setup.sh --local      # 이 체크아웃에서 설치(clone
 - **쿼리 본문 전문**: 추론 SQL 본문을 전문으로 작성(동적 쿼리는 대표 시나리오 2~3개를 각각 전문으로 작성)
 
 > ⚠️ **전체 쿼리 본문은 주된 산출물**이므로 쿼리가 많다는 이유로 본문을 생략 / 요약 / `...`로 축약하거나 대표 몇 개만 리포팅하지 않습니다.<br> 
-> 쿼리가 많을 것으로 예상되면 **도메인 배치 / 대상 범위 지정 + `--continue` 옵션**을 사용해 주세요.
+> 쿼리가 많을 것으로 예상되면 **도메인 배치 / 대상 범위 지정 + `--continue` 옵션**을 사용해 주시기 바랍니다.
 
 ---
 
@@ -177,12 +177,12 @@ db:
 ```
 
 - `--db`는 인덱스 커버리지 확정을 위해 **스키마만 조회**합니다(EXPLAIN을 실행하지 않음).
-- `host_allowlist`: 비어 있지 않으면 목록 밖 호스트를 모두 차단합니다. **개발 DB(사설 IP 등)를 반드시 추가**하세요.
+- `host_allowlist`: 비어 있지 않으면 목록 밖 호스트를 모두 차단합니다. **개발 DB(사설 IP 등)를 반드시 추가해야 합니다**.
 
 ### 안전장치
 **프로덕션 금지 / 읽기전용 / opt-in**
 - 프로덕션 호스트(이름 패턴 / 공인 IP)와 `SELECT`/`EXPLAIN` 외 문장은 차단됩니다. 
-- 개발 DB 호스트는 프로파일 `host_allowlist`에 추가해 주세요.
+- 개발 DB 호스트는 프로파일 `host_allowlist`에 추가해야 합니다.
 - 접속 URL은 실행 시 프로파일 `url_env` 변수(셸 환경변수 또는 `.env`)에서 읽습니다. 없으면 프로젝트 datasource 설정에서 자동 추출하고(운영 제외, 접속 전 확인), 그래도 없으면 스킬이 **준비 후 다시 실행하도록 안내**합니다(보안상 **비밀번호를 대화창에서 직접 받지 않습니다**).
 - 사용자는 아래 중 한 방법으로 접속 URL을 **미리** 준비합니다:
   - **`.env`에 저장(권장)**: 
@@ -199,7 +199,7 @@ db:
 
 스킬은 실행 시 **하루 1회** 새 버전이 있는지 조용히 확인합니다(네트워크/인증/git 실패 시 그냥 넘어감).
 - `claude plugin update query-inspector@query-inspector-marketplace`를 실행하도록 안내합니다(적용하려면 claude 재시작).
-- 또는 `/plugin` -> Marketplaces에서 auto-update를 켜두면 세션 시작 시 자동으로 최신화됩니다.
+- 또는 `/plugin` -> Marketplaces에서 auto-update를 활성화해 두면 세션 시작 시 자동으로 최신화됩니다.
 - `--local` 설치라면 체크아웃에서 `git pull` 후 `claude plugin marketplace update ...` 와 `claude plugin update ...` 를 실행합니다.
 - 끄기: `--no-update-check` 또는 설정 `report.update_check: false`
 
@@ -207,7 +207,7 @@ db:
 
 ## 9. 설정 (`.query-inspector.yml`)
 
-없어도 기본값으로 동작합니다. 조정하려면 템플릿을 복사하세요.
+없어도 기본값으로 동작합니다. 조정하려면 템플릿을 복사합니다.
 ```bash
 cp .query-inspector.example.yml .query-inspector.yml
 ```
@@ -235,4 +235,4 @@ cp .query-inspector.example.yml .query-inspector.yml
 
 ---
 
-설계 배경은 [DESIGN.md](./DESIGN.md), 변경 이력은 [CHANGELOG.md](./CHANGELOG.md)를 참고하세요.
+설계 배경은 [DESIGN.md](./DESIGN.md), 변경 이력은 [CHANGELOG.md](./CHANGELOG.md)를 참고해 주시기 바랍니다.

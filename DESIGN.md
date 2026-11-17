@@ -373,9 +373,9 @@ description: >-
 
 ### 12.1 배포 (설치)
 
-- `query-inspector-setup.sh`는 플러그인 방식으로만 설치합니다(멀티스킬 + 공유 자산 + `/query-inspector:` 네임스페이스 구조라, 스킬 폴더 직접 복사는 공유 자산 경로/네임스페이스가 맞지 않아 지원하지 않음).
-  - **기본**: 공개 마켓플레이스(`query-inspector-marketplace`, `.claude-plugin/marketplace.json`)를 등록하고 `query-inspector` 플러그인을 설치합니다. 호출은 `/query-inspector:tuning-report`, 갱신은 `claude plugin update query-inspector@query-inspector-marketplace`(재시작). 스크립트 한 파일만으로 동작합니다.
-  - **`--local`**: 로컬 체크아웃(clone/포크/오프라인/수정판)을 마켓 소스로 등록해 거기서 설치합니다(수동 등가물: `claude plugin marketplace add ./<checkout>`). `--project`와 함께 쓰면 프로젝트 로컬 설치.
+- `query-inspector-setup.sh`는 플러그인 방식으로만 설치한다(멀티스킬 + 공유 자산 + `/query-inspector:` 네임스페이스 구조라, 스킬 폴더 직접 복사는 공유 자산 경로/네임스페이스가 맞지 않아 지원하지 않음).
+  - **기본**: 공개 마켓플레이스(`query-inspector-marketplace`, `.claude-plugin/marketplace.json`)를 등록하고 `query-inspector` 플러그인을 설치한다. 호출은 `/query-inspector:tuning-report`, 갱신은 `claude plugin update query-inspector@query-inspector-marketplace`(재시작). 스크립트 한 파일만으로 동작한다.
+  - **`--local`**: 로컬 체크아웃(clone/포크/오프라인/수정판)을 마켓 소스로 등록해 거기서 설치한다(수동 등가물: `claude plugin marketplace add ./<checkout>`). `--project`와 함께 사용하면 프로젝트 로컬 설치.
 - 팀 온보딩 문서 + `.query-inspector.example.yml` 제공. 방언/심각도 규칙은 프로젝트별 `.query-inspector.yml`로 오버라이드.
 - 설치/사용법 상세: [MANUAL.md](./MANUAL.md)(공식 사용자 매뉴얼).
 
@@ -392,7 +392,7 @@ description: >-
 
 ### 12.4 리포트 출력 언어(i18n)
 
-- 출력층(리포트)은 `report.language: auto`로 사용자 대화 언어를 따라 출력합니다(런타임 결정, 배포본 무관). 지침층(SKILL/references)과 식별자는 언어 중립으로 유지합니다. 정책: [references/i18n.md](./references/i18n.md).
+- 출력층(리포트)은 `report.language: auto`로 사용자 대화 언어를 따라 출력한다(런타임 결정, 배포본 무관). 지침층(SKILL/references)과 식별자는 언어 중립으로 유지한다. 정책: [references/i18n.md](./references/i18n.md).
 
 ---
 

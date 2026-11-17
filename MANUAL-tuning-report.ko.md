@@ -4,7 +4,7 @@
 
 query-inspector의 두 스킬 중 하나인 **`tuning-report`** 의 상세 매뉴얼입니다.<br> 
 이 스킬을 실행하면 **git 기반 변경분의 SQL/ORM 쿼리를 추출해 튜닝(인덱스 누락 / N+1 / 안티패턴 등)** 리포트를 작성합니다.<br> 
-튜닝 대신 프로젝트 내 쿼리의 목록을 뽑아 보려면 **[`inventory-report`](./MANUAL-inventory-report.ko.md)** 스킬을 사용하세요.
+튜닝 대신 프로젝트 내 쿼리의 목록을 뽑아 보려면 **[`inventory-report`](./MANUAL-inventory-report.ko.md)** 스킬을 사용해 주시기 바랍니다.
 
 > 두 스킬 개요: [MANUAL.ko.md](./MANUAL.ko.md)<br>
 > 소개: [README.ko.md](./README.ko.md)<br>
@@ -39,7 +39,7 @@ query-inspector의 두 스킬 중 하나인 **`tuning-report`** 의 상세 매�
 
 ## 2. 설치
 
-query-inspector는 플러그인으로 설치합니다(스킬 복사 설치는 없음 - 두 스킬이 자산을 한 네임스페이스 아래에서 공유). 공개 마켓 대신 내 체크아웃에서 설치하려면 `--local`을 쓰세요.
+query-inspector는 플러그인으로 설치합니다(스킬 복사 설치는 지원하지 않습니다 - 두 스킬이 자산을 한 네임스페이스 아래에서 공유). 공개 마켓 대신 내 체크아웃에서 설치하려면 `--local`을 사용합니다.
 
 ```bash
 bash query-inspector-setup.sh              # 개인 글로벌(기본) -> /query-inspector:tuning-report
@@ -47,7 +47,7 @@ bash query-inspector-setup.sh --project    # 프로젝트 로컬(이 프로젝�
 bash query-inspector-setup.sh --local      # 이 체크아웃에서 설치(clone/포크/오프라인)
 ```
 **Windows**에서는 같은 옵션으로 `query-inspector-setup.bat`을 실행합니다.<br> 
-`--project`로 설치하실 때는 대상 프로젝트 루트에서 실행하세요(다른 위치면 `--project <경로>`).
+`--project`로 설치할 때는 대상 프로젝트 루트에서 실행해 주시기 바랍니다(다른 위치면 `--project <경로>`).
 
 **요구사항:** 
 - `git`
@@ -220,7 +220,7 @@ db:
 ```
 
 - `url_env` / `env_file`: 접속 URL은 환경변수나 `.env`에서만 읽습니다(URL을 설정 파일에 넣지 않음). 자세한 조달 순서는 아래에서 설명합니다.
-- `host_allowlist`: 비어 있지 않으면 목록 밖 호스트를 모두 차단합니다. **개발 DB(사설 IP 등)를 반드시 추가**하세요.
+- `host_allowlist`: 비어 있지 않으면 목록 밖 호스트를 모두 차단합니다. **개발 DB(사설 IP 등)를 반드시 추가해야 합니다**.
 - `allow_explain_analyze`: `true`일 때만 `--analyze`(EXPLAIN ANALYZE)를 허용하며, 허용되어 있더라도 트랜잭션을 열고 무조건 롤백합니다.
 - `statement_timeout_ms` / `max_rows`: 문장 타임아웃과 예상 스캔 rows 상한(가드레일).
 
@@ -251,7 +251,7 @@ db:
 
 스킬은 실행 시 **하루 1회** 새 버전이 있는지 조용히 확인합니다(네트워크 / 인증 / git 실패 시 그냥 넘어감).
 - `claude plugin update query-inspector@query-inspector-marketplace`를 실행하도록 안내합니다(적용하려면 claude 재시작).
-- 또는 `/plugin` -> Marketplaces에서 auto-update를 켜두면 세션 시작 시 자동으로 최신화됩니다.
+- 또는 `/plugin` -> Marketplaces에서 auto-update를 활성화해 두면 세션 시작 시 자동으로 최신화됩니다.
 - `--local` 설치라면 체크아웃에서 `git pull` 후 `claude plugin marketplace update ...` 와 `claude plugin update ...` 를 실행합니다.
 - 끄기: `--no-update-check` 또는 설정 `report.update_check: false`
 
@@ -259,7 +259,7 @@ db:
 
 ## 9. 설정 (`.query-inspector.yml`)
 
-없어도 기본값으로 동작합니다. 조정하려면 템플릿을 복사하세요.
+없어도 기본값으로 동작합니다. 조정하려면 템플릿을 복사합니다.
 ```bash
 cp .query-inspector.example.yml .query-inspector.yml
 ```
@@ -289,4 +289,4 @@ cp .query-inspector.example.yml .query-inspector.yml
 
 ---
 
-설계 배경은 [DESIGN.md](./DESIGN.md), 변경 이력은 [CHANGELOG.md](./CHANGELOG.md)를 참고하세요.
+설계 배경은 [DESIGN.md](./DESIGN.md), 변경 이력은 [CHANGELOG.md](./CHANGELOG.md)를 참고해 주시기 바랍니다.

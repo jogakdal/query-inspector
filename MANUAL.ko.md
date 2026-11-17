@@ -62,4 +62,4 @@
 - **[MANUAL-inventory-report.ko.md](./MANUAL-inventory-report.ko.md)** - 인벤토리 사용법 / 옵션 / 카탈로그 파이프라인 / 인덱스 커버리지 / 리포트 형식 / 설정 / FAQ
 - **[INSTALL.ko.md](./INSTALL.ko.md)** - 플러그인 전용 설치 / 수동 설치 / 설치 확인
 
-전체 휴리스틱 카탈로그와 설계는 `references/`와 [DESIGN.md](./DESIGN.md)를 참고하세요.
+전체 휴리스틱 카탈로그와 설계는 `references/`와 [DESIGN.md](./DESIGN.md)를 참고해 주시기 바랍니다.
