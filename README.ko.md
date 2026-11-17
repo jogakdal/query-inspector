@@ -31,9 +31,9 @@
 - **프로덕션 금지**: 이 스킬은 프로덕션 DB에 접속하지 않기 위해 기본으로 `*prod*`/`*live*`/`*production*` 호스트 패턴을 차단하며, `host_allowlist`를 권장합니다.
 - **읽기 전용 권장**: DB 접속 계정을 명시할 때 가급적 읽기 전용 계정을 사용해 주세요. 이 스킬은 `SELECT`/`EXPLAIN` 이외의 문장을 실행하지 않습니다(가드레일 코드로 강제).
 - **프로젝트 저장소에 자격증명 커밋 금지**:
-  - 설정 파일 `.query-inspector.yml`에는 접속 URL의 **변수 이름만** 두고, 실제 URL은 넣지 않기를 권장합니다.
-  - `--db` 옵션의 접속 URL은 **환경변수 또는 `.env`에만** 둡니다. `.env`는 스킬이 실행되는 프로젝트 디렉토리에 생성되는, 접속 URL 같은 비밀값 파일입니다.
-  - `.env`가 커밋되지 않도록 스킬이 프로젝트 `.gitignore`에 자동 등록하니, 그 항목을 지우지 말아 주세요.
+    - 설정 파일 `.query-inspector.yml`에는 접속 URL의 **변수 이름만** 두고, 실제 URL은 넣지 않기를 권장합니다.
+    - `--db` 옵션의 접속 URL은 **환경변수 또는 `.env`에만** 둡니다. `.env`는 스킬이 실행되는 프로젝트 디렉토리에 생성되는, 접속 URL 같은 비밀값 파일입니다.
+    - `.env`가 커밋되지 않도록 스킬이 프로젝트 `.gitignore`에 자동 등록하니, 그 항목을 지우지 말아 주세요.
 - **선택적 DB 사용**: 기본 실행 시 DB 접속이 필요 없는 정적 분석만 수행합니다. `--db <profile>`로 명시할 때만 DB에 접근합니다.
 
 가드레일 전문은 [DESIGN.md 7절](./DESIGN.md).
@@ -68,14 +68,14 @@ claude plugin install query-inspector@query-inspector-marketplace
 > - 설치 스크립트가 실행되지 않는 경우 실행 권한(`chmod 755`)을 부여하거나 `bash`를 사용하여 실행해 주세요.
 
 - **플러그인 설치**
-  - 마켓플레이스(`query-inspector-marketplace`)를 등록하고 플러그인(두 스킬)을 설치합니다.
-  - 호출은 **`/query-inspector:tuning-report`** 또는 **`/query-inspector:inventory-report`**, 갱신은 `claude plugin update query-inspector@query-inspector-marketplace`(재시작 필요).
-  - 설치 스크립트 한 파일만 있어도 동작합니다(저장소 clone 불필요).
-  - 기본은 개인 글로벌(user)이며 `--project` 옵션으로 프로젝트 로컬(이 프로젝트에서만) 설치를 고를 수 있습니다(`--project`는 **대상 프로젝트 루트에서 실행**).
-  - `claude` CLI가 필요하며, 공개 저장소는 익명으로 받으므로 별도 인증이 없어도 됩니다.
+    - 마켓플레이스(`query-inspector-marketplace`)를 등록하고 플러그인(두 스킬)을 설치합니다.
+    - 호출은 **`/query-inspector:tuning-report`** 또는 **`/query-inspector:inventory-report`**, 갱신은 `claude plugin update query-inspector@query-inspector-marketplace`(재시작 필요).
+    - 설치 스크립트 한 파일만 있어도 동작합니다(저장소 clone 불필요).
+    - 기본은 개인 글로벌(user)이며 `--project` 옵션으로 프로젝트 로컬(이 프로젝트에서만) 설치를 고를 수 있습니다(`--project`는 **대상 프로젝트 루트에서 실행**).
+    - `claude` CLI가 필요하며, 공개 저장소는 익명으로 받으므로 별도 인증이 없어도 됩니다.
 - **로컬 체크아웃(`--local`)**
-  - clone/포크한 체크아웃을 마켓플레이스로 등록해 거기서 설치합니다 - 오프라인이나 수정판을 네트워크 없이 돌릴 때 씁니다.
-  - 스킬 복사 설치는 없습니다: 두 스킬이 `/query-inspector:` 네임스페이스 아래에서 자산을 공유하며, 이 구조는 트리를 플러그인으로 로드할 때만 해석됩니다.
+    - clone/포크한 체크아웃을 마켓플레이스로 등록해 거기서 설치합니다 - 오프라인이나 수정판을 네트워크 없이 돌릴 때 씁니다.
+    - 스킬 복사 설치는 없습니다: 두 스킬이 `/query-inspector:` 네임스페이스 아래에서 자산을 공유하며, 이 구조는 트리를 플러그인으로 로드할 때만 해석됩니다.
 
 **기존 설치 업데이트.**
 `claude plugin update query-inspector@query-inspector-marketplace`를 실행한 뒤 Claude Code를 재시작하거나 `/reload-plugins`로 적용합니다.

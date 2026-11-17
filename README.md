@@ -31,9 +31,9 @@ Please observe the following:
 - **No production**: To keep from ever connecting to a production DB, the skill blocks `*prod*`/`*live*`/`*production*` host patterns by default, and a `host_allowlist` is recommended.
 - **Read-only recommended**: When you specify a DB account, prefer a read-only one. The skill runs nothing but `SELECT`/`EXPLAIN` (enforced by guardrail code).
 - **Never commit credentials to the project's repo**:
-  - In the config file `.query-inspector.yml`, keep only the **variable name** of the connection URL, not the URL itself.
-  - The `--db` connection URL goes **only into an environment variable or `.env`**. `.env` is a secrets file created in the project directory where the skill runs.
-  - So that `.env` is never committed, the skill auto-registers it in the project's `.gitignore` - don't remove that entry.
+    - In the config file `.query-inspector.yml`, keep only the **variable name** of the connection URL, not the URL itself.
+    - The `--db` connection URL goes **only into an environment variable or `.env`**. `.env` is a secrets file created in the project directory where the skill runs.
+    - So that `.env` is never committed, the skill auto-registers it in the project's `.gitignore` - don't remove that entry.
 - **DB access is opt-in**: By default it runs only static analysis, which needs no DB connection. The DB is touched only when you pass `--db <profile>`.
 
 Full guardrails: [DESIGN.md section 7](./DESIGN.md).
@@ -68,14 +68,14 @@ After install, invoke in a new session with `/query-inspector:tuning-report` or 
 > - If the setup script won't run, grant execute permission (`chmod 755`) or run it via `bash`.
 
 - **Plugin install**
-  - Registers the marketplace (`query-inspector-marketplace`) and installs the plugin (both skills).
-  - Invoke with **`/query-inspector:tuning-report`** or **`/query-inspector:inventory-report`**; update with `claude plugin update query-inspector@query-inspector-marketplace` (restart to apply).
-  - The setup script file alone is enough (no repo clone needed).
-  - Defaults to user-global; `--project` selects project-local (this project only), run **from the target project root**.
-  - Requires the `claude` CLI; a public repo is fetched anonymously (no auth needed).
+    - Registers the marketplace (`query-inspector-marketplace`) and installs the plugin (both skills).
+    - Invoke with **`/query-inspector:tuning-report`** or **`/query-inspector:inventory-report`**; update with `claude plugin update query-inspector@query-inspector-marketplace` (restart to apply).
+    - The setup script file alone is enough (no repo clone needed).
+    - Defaults to user-global; `--project` selects project-local (this project only), run **from the target project root**.
+    - Requires the `claude` CLI; a public repo is fetched anonymously (no auth needed).
 - **Local checkout (`--local`)**
-  - Registers your cloned/forked checkout as the marketplace and installs from it - for offline or modified builds, no network.
-  - There is no skill-copy install: the two skills share assets under the `/query-inspector:` namespace, which only resolves when the tree is loaded as a plugin.
+    - Registers your cloned/forked checkout as the marketplace and installs from it - for offline or modified builds, no network.
+    - There is no skill-copy install: the two skills share assets under the `/query-inspector:` namespace, which only resolves when the tree is loaded as a plugin.
 
 **Updating an existing install.**
 Run `claude plugin update query-inspector@query-inspector-marketplace`, then restart Claude Code or run `/reload-plugins` to apply.
