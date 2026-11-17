@@ -214,7 +214,7 @@ ORM dynamic queries can't be reconstructed 100%. So every inferred query carries
 
 ## Extending (new stacks)
 
-**Python (Django / SQLAlchemy)** is officially supported as of 1.1.0, validated against real open-source projects (django-oscar, flaskbb) - though not as broadly as the primary JVM stacks (e.g. `stacks: [python-django]`).
+**Python (Django / SQLAlchemy)** is the first extension stack, added in 1.1.0 and validated against real open-source projects (django-oscar, flaskbb). You can pin the target stack in config, e.g. `stacks: [python-django]`.
 
 **Node (Prisma/TypeORM) and .NET (EF Core/Dapper) are the next candidates.**
 The adapter structure lets them be added without touching the core (just `references/adapters/<stack>.md`), so contributions are welcome. -> [references/adapters/_template.md](./references/adapters/_template.md)
