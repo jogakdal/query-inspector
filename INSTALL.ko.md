@@ -97,7 +97,7 @@ claude plugin install query-inspector@query-inspector-marketplace -y --scope use
 #    프로젝트 로컬로 하려면: 프로젝트 루트에서 --scope local 사용
 ```
 
-이것이 `query-inspector-setup.sh --local`이 하는 일 그대로입니다 - 어디에도 push하지 않고 수정판/오프라인 빌드를 돌릴 때 쓰세요. 호출은 `/query-inspector:tuning-report`.
+`query-inspector-setup.sh --local`이 수행하는 절차가 이와 동일합니다 - 어디에도 push하지 않고 수정판/오프라인 빌드를 돌릴 때 쓰세요. 호출은 `/query-inspector:tuning-report`.
 
 > **체크아웃 전체를 등록하는 이유**<br>
 > 두 스킬(`tuning-report`/`inventory-report`)이 `references/`/`scripts/`/`assets/`를 `${CLAUDE_PLUGIN_ROOT}`로 공유하고, 둘 다 `/query-inspector:` 네임스페이스 아래에 있습니다 - 이 구조는 트리를 플러그인으로 로드할 때만 해석됩니다.
