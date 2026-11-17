@@ -22,7 +22,7 @@
 
 ## [1.2.0] - 2026-10-12
 
-svc-settle-batch(Spring Batch 레거시) 점진 스캔 자가 진단을 반영한 레거시/배치 분석 강화 + 점진 스캔 세션 리포트 릴리스.
+실무 Spring Batch 레거시 프로젝트의 점진 스캔 자가 진단을 반영한 레거시/배치 분석 강화 + 점진 스캔 세션 리포트 릴리스.
 
 ### Added
 - **휴리스틱 ID 4종** - `tx_not_participating`(쓰기 트랜잭션 미참여·원자성), `replica_routing_defect`(read replica 라우팅), `connection_abandon`(풀 abandon), `paging_on_mutating_set`(처리로 줄어드는 대상의 OFFSET 페이징·정확성). 앞 3종은 `out_of_catalog`에서 승격. heuristics/i18n/example 3곳 정합.
@@ -40,7 +40,7 @@ svc-settle-batch(Spring Batch 레거시) 점진 스캔 자가 진단을 반영�
 
 ## [1.1.1] - 2026-10-12
 
-JVM 주력 스택(Kotlin + JdbcTemplate 래퍼/QueryDSL/JPA) 실무 검증(svc-settle-admin)의 자가 진단을 반영한 판정 정확도/병렬 처리/카탈로그 강화 릴리스.
+JVM 주력 스택(Kotlin + JdbcTemplate 래퍼/QueryDSL/JPA) 실무 프로젝트 검증의 자가 진단을 반영한 판정 정확도/병렬 처리/카탈로그 강화 릴리스.
 
 ### Added
 - **`out_of_catalog` 공식화** - 명명된 휴리스틱에 없는 결함(쓰기 트랜잭션 미참여, read replica 라우팅 결함, 트랜잭션 없는 복합 쓰기 등)을 담는 메타 ID. 심각도는 성격별 규칙(정확성/원자성/보안 critical, 성능 warn, 기타 info)으로 판정하고 이름에 구체 패턴을 병기. heuristics/i18n/example 정합. (실무 최상위 결함 3건이 카탈로그 밖이던 문제 대응)
@@ -61,13 +61,13 @@ JVM 주력 스택(Kotlin + JdbcTemplate 래퍼/QueryDSL/JPA) 실무 검증(svc-s
 
 ## [1.1.0] - 2026-10-08
 
-실무 검증(django-oscar, flaskbb)과 각 자가 진단 리포트를 반영한 Python(Django/SQLAlchemy) 커버리지 강화 + 버그 수정 릴리스.
+실무 오픈소스 검증과 각 자가 진단 리포트를 반영한 Python(Django/SQLAlchemy) 커버리지 강화 + 버그 수정 릴리스.
 
 ### Added
 - **Python(Django/SQLAlchemy) 커버리지 강화** - 원시 SQL 안티패턴 감지(`.raw()`/`.extra()`/`text()`의 f-string/%/+ 보간 -> `string_substitution`, `||`/`NVL`/`SYSDATE`/`ROWNUM` -> `dialect_pipe_concat`, `SELECT *` -> `select_star`). Django 마이그레이션(`migrations/*.py`)과 SQLAlchemy(`versions/*.py`)를 쿼리 소스로 1급 분류. SQLAlchemy는 FK 자동 인덱스가 없어 `user_id`도 `missing_index` 대상(Django와 반대).
 - **휴리스틱 ID 6종 추가** - `write_in_loop`/`lost_update`/`duplicate_query`/`stale_queryset_cache`/`query_correctness`/`scope_filter_bypass`(보안; 카탈로그/i18n/설정 일관). N+1 심각도 매트릭스(N 상한 x 실행 빈도) 추가.
 - **어댑터/방언 규칙 보강(Django)** - python-django: 대소문자 룩업 번역 정정(`__iexact`는 등호, `__istartswith` 추가), 암묵 인덱스(SlugField/O2O/M2M/`*_pattern_ops`), `Meta.ordering` 예외, 마이그레이션 연산 목록, N+1 원천/해소 함정, 행 곱셈/팬아웃. PostgreSQL 방언 노트 스텁 해제(표현식 인덱스 식 일치, pg_trgm, `CONCURRENTLY`, 역방향 스캔, `COUNT(*)`, PG18 skip scan).
-- **어댑터 규칙 보강(SQLAlchemy/Flask, flaskbb 검증)** - 조인 없이 `where`에 타 엔티티를 참조하는 **암묵 FROM 카티전 곱**과 relationship `.any()`/`.has()`의 **비상관 EXISTS(필터 무력화)** 구분 + 컴파일 검증(프로젝트 venv 사용), Flask-SQLAlchemy 구문(`Model.query`/`db.paginate`/`WriteOnly`·`DynamicMapped`), 연관(secondary) 테이블·`ON DELETE CASCADE` 참조측 인덱스(PostgreSQL), Python 멀티 DB 방언 판정(운영 구성 우선), Jinja2 등 서버 템플릿을 `template` 유형으로 수집해 N+1 점검.
+- **어댑터 규칙 보강(SQLAlchemy/Flask 검증)** - 조인 없이 `where`에 타 엔티티를 참조하는 **암묵 FROM 카티전 곱**과 relationship `.any()`/`.has()`의 **비상관 EXISTS(필터 무력화)** 구분 + 컴파일 검증(프로젝트 venv 사용), Flask-SQLAlchemy 구문(`Model.query`/`db.paginate`/`WriteOnly`·`DynamicMapped`), 연관(secondary) 테이블·`ON DELETE CASCADE` 참조측 인덱스(PostgreSQL), Python 멀티 DB 방언 판정(운영 구성 우선), Jinja2 등 서버 템플릿을 `template` 유형으로 수집해 N+1 점검.
 
 ### Fixed
 - **상태 경로 불일치(치명)** - `SKILL.md`가 상태를 `<report.dir>/state.json`으로 적어 스크립트(`<report.dir>/tuning-reports/state.json`)와 어긋나, 두 번째 실행부터 증분/follow-up이 깨지던 문제.

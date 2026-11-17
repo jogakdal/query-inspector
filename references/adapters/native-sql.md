@@ -17,7 +17,7 @@
 
 ## 프로젝트 고유 DAO 래퍼
 
-많은 프로젝트가 `JdbcTemplate`/`NamedParameterJdbcTemplate`을 직접 호출하지 않고 **자체 래퍼**(예: `SvcSettleDb`, `Queryable.select/insert/update/selectAsStream`)를 거친다. diff/수집에 SQL이 래퍼 메서드 호출로만 보이면:
+많은 프로젝트가 `JdbcTemplate`/`NamedParameterJdbcTemplate`을 직접 호출하지 않고 **자체 래퍼**(예: `AppDb`, `Queryable.select/insert/update/selectAsStream`)를 거친다. diff/수집에 SQL이 래퍼 메서드 호출로만 보이면:
 
 - 래퍼 클래스 소스를 Read해 `JdbcTemplate`/`NamedParameterJdbcTemplate`(또는 `DataSource`/`EntityManager`)을 주입받아 감싸는지 확인한다.
 - 맞으면 그 래퍼의 public 메서드(`select`/`update`/`selectAsStream` 등)를 **쿼리 진입점으로 등록**하고, 호출부의 SQL 인자를 이 어댑터 규칙으로 분석한다.
