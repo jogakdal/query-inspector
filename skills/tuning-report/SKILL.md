@@ -87,6 +87,8 @@ allowed-tools: Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/collect_diff.py *), Ba
 
 ## Stage 4 - 리포트 생성 + 상태 저장
 
+**리포트 문체는 `references/report-style.md`를 강제로 따른다.** 실행하는 AI/장비의 성향과 무관하게 산출 문서 품질을 균일하게 유지하기 위함이다 - 리포트(터미널 요약 + 상세 파일)를 쓰기 전에 이 문서를 로드해 한국어는 전 규칙, 영문은 기본 원칙을 적용한다. 자가 진단 리포트(`--self-diagnose-internal`)에도 동일하게 적용한다.
+
 `${CLAUDE_PLUGIN_ROOT}/assets/report_template.md`를 채워 두 곳에 출력한다.
 
 1. **터미널 요약** - 위험도순 상위 `terminal_top_n`개(기본 10). `min_severity` 하한 적용.

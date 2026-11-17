@@ -7,6 +7,7 @@ SKILL.md 절차가 이 템플릿의 {{...}} 자리를 채워 두 곳에 출력�
 수정안은 "제안"이다 - 코드 자동 반영 금지(사용자 확인 후 별도 적용).
 출력 언어는 report.language(auto=사용자 언어)로 렌더한다. 아래 산문(제목/근거/제안)은 지역화하되,
 식별자(휴리스틱 ID/신뢰도 라벨/설정 키/SQL)는 언어 중립으로 유지한다. -> references/i18n.md
+문체는 references/report-style.md 를 강제로 따른다(한국어=전 규칙, 영문=기본 원칙). 산출 문서 품질 균일화.
 -->
 # Query Tuning Report - {{timestamp}}
 

@@ -53,7 +53,7 @@
 
 ## 진단 리포트 생성/저장
 
-정규 리포트를 낸 **직후**, 별도 진단 리포트를 생성한다.
+정규 리포트를 낸 **직후**, 별도 진단 리포트를 생성한다. 진단 리포트도 **문체는 `references/report-style.md`를 따른다**(한국어=전 규칙, 영문=기본 원칙).
 
 - 저장 위치: `<report.dir>/diagnostics/<timestamp>.md`(기본 `docs/query-inspector/diagnostics/`). 정규 리포트와 **다른 폴더**에 두어 섞이지 않게 한다.
 - `diagnostics/`에 `.gitignore`(`*`)가 없으면 생성한다(진단 결과는 로컬 전용, 커밋 방지).
