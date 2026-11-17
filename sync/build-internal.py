@@ -36,12 +36,13 @@ for _s in (sys.stdout, sys.stderr):
 HERE = os.path.dirname(os.path.abspath(__file__))
 PUBLIC_ROOT = os.path.dirname(HERE)
 
-# 내부 배포판에서 제외: 생성 도구(sync) + 영어 원본 문서(한국어본이 승격 대체) + LICENSE(사내판 라이선스 미표기).
-# CONTRIBUTING은 포함하되 라이선스 섹션만 제거한다(strip_license).
+# 내부 배포판에서 제외:
+#  - 생성 도구(sync), 영어 원본 문서(한국어본이 승격 대체), LICENSE(사내판 라이선스 미표기).
+#  - CONTRIBUTING(공개 기여 가이드라 사내 불필요), PRIVACY(ko/영문 모두 - 사내 전용 도구라 불필요).
 EXCLUDE_DIRS = {".git", "sync"}
 EXCLUDE_FILES = {"README.md", "MANUAL.md", "INSTALL.md",
                  "MANUAL-tuning-report.md", "MANUAL-inventory-report.md",
-                 "LICENSE"}
+                 "LICENSE", "CONTRIBUTING.md", "PRIVACY.md", "PRIVACY.ko.md"}
 # 한국어본을 내부 기본 문서로 승격(내부는 한국어 단일): README.ko.md → README.md
 PROMOTE = {"README.ko.md": "README.md", "MANUAL.ko.md": "MANUAL.md", "INSTALL.ko.md": "INSTALL.md",
            "MANUAL-tuning-report.ko.md": "MANUAL-tuning-report.md",
@@ -60,6 +61,14 @@ def strip_license(text):
     """라이선스 섹션(선행 --- 구분선 포함)을 제거한다. 섹션이 문서 끝이면 끝까지."""
     out = LICENSE_SECTION_RE.sub("", text)
     return out.rstrip() + "\n"   # 섹션 삭제로 사라진 파일 끝 개행 복원
+
+
+# README의 CONTRIBUTING 참조 줄 제거(사내판은 CONTRIBUTING을 EXCLUDE하므로 깨진 링크 방지).
+CONTRIB_LINE_RE = re.compile(r'^.*\[CONTRIBUTING\.md\].*$\n?', re.M)
+
+
+def strip_contrib_link(text):
+    return CONTRIB_LINE_RE.sub("", text)
 
 
 # 사내 전용 추가 블록: 생성 트리의 문서 끝에 이 디렉토리의 같은 이름 파일을 덧붙인다.
@@ -172,10 +181,10 @@ def main():
             # 치환(공개값→내부값)
             for a, b in pairs:
                 text = text.replace(a, b)
-            # 라이선스 섹션(README/CONTRIBUTING) 삭제 - 사내판은 라이선스 미표기
+            # README: 라이선스 섹션 삭제(사내판 라이선스 미표기) + CONTRIBUTING 참조 줄 제거(사내판은 CONTRIBUTING EXCLUDE).
             base = os.path.basename(dst_rel)
-            if base in ("README.md", "CONTRIBUTING.md"):
-                text = strip_license(text)
+            if base == "README.md":
+                text = strip_contrib_link(strip_license(text))
             # 네임스페이스
             is_manifest = relpath.endswith(".json") and ".claude-plugin" in root
             text = apply_namespace(text, ns, is_manifest)
