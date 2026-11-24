@@ -21,7 +21,7 @@ The manual for **`tuning-report`**, one of query-inspector's two skills. Run it 
 - **Auto-degrading tiers (3-Tier)**: static heuristics -> schema index matching -> (optional) live-DB EXPLAIN.
 - **Broad stacks**:
   - `Kotlin / Java` + MyBatis / native SQL / JPA/Hibernate (derived methods / `@Query` / QueryDSL / Kotlin JDSL)
-  - **Python (Django / SQLAlchemy)**: supported, though not as thoroughly validated as the primary stacks
+  - **Python (Django / SQLAlchemy)**: supported
   - dialects (MySQL / MariaDB, etc.) auto-detected
 - **Ready-to-use report**: severity-ranked summary + Action Items (file / line / paste-ready code / DDL)
 - **Guardrails**: live-DB access is opt-in, production is blocked, read-only queries only

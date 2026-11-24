@@ -46,7 +46,7 @@ allowed-tools: Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/collect_diff.py *), Ba
 깊이는 `depth` 설정/`--depth` 인자로 정하되, 조건 미충족 시 자동 강등한다.
 
 - **Tier 1 - 정적 휴리스틱 (항상 동작, DB 불필요).** `references/heuristics.md` 카탈로그로 안티패턴을 탐지한다. 기본이자 중심.
-- **Tier 2 - 스키마 컨텍스트.** 엔티티(`@Entity`/`@Table`)/마이그레이션은 소스에서 **자동 감지**하고, `schema.*` 설정이나 `--db` 실 DB 조회로 보강해 WHERE/JOIN/ORDER BY 컬럼의 **인덱스 존재 여부**를 대조한다. **`missing_index`(인덱스 누락)는 이 스킬의 대표 표적이므로 최우선 점검** - 이 도구의 주된 동기가 "인덱스 없이 배포"였다 - 커버되지 않는 컬럼(조합)에 **구체적 `CREATE INDEX` DDL(컬럼 순서/트레이드오프 포함)**을 제안한다. 같은 변경분의 마이그레이션과 교차해 "이번 변경이 필요로 하는 인덱스가 빠졌는지"를 본다. 규칙: `references/tier2-index-matching.md`. **`--db`를 제공하면 실 DB에서 스키마(`SHOW INDEX`/`information_schema`)를 직접 조회**하므로 DDL/엔티티 없이도 대조된다(라이브 스키마 + 이번 마이그레이션 델타). 이때 Tier2/Tier3가 함께 충족.
+- **Tier 2 - 스키마 컨텍스트.** 엔티티(`@Entity`/`@Table`)/마이그레이션은 소스에서 **자동 감지**하고, `schema.*` 설정이나 `--db` 실 DB 조회로 보강해 WHERE/JOIN/ORDER BY 컬럼의 **인덱스 존재 여부**를 대조한다. **`missing_index`(인덱스 누락)는 이 스킬의 대표 표적이므로 최우선 점검** - 이 도구의 주된 동기가 "인덱스 없이 배포"였다 - 커버되지 않는 컬럼(조합)에 **구체적 `CREATE INDEX` DDL(컬럼 순서/트레이드오프 포함)**을 제안한다. 같은 변경분의 마이그레이션과 교차해 "이번 변경이 필요로 하는 인덱스가 빠졌는지"를 점검한다. 규칙: `references/tier2-index-matching.md`. **`--db`를 제공하면 실 DB에서 스키마(`SHOW INDEX`/`information_schema`)를 직접 조회**하므로 DDL/엔티티 없이도 대조된다(라이브 스키마 + 이번 마이그레이션 델타). 이때 Tier2/Tier3가 함께 충족.
 - **Tier 3 - 실 DB EXPLAIN (`--db`, opt-in).** 아래 가드레일을 거쳐 `EXPLAIN`으로 실행계획을 수집하고 같은 접속으로 스키마도 조회해 Tier2를 채운다. `run_explain.py`(pymysql 우선 + `mysql` CLI 폴백).
 
 각 이슈에 `heuristics.md`의 ID/심각도(`severity_rules`로 오버라이드)/근거/수정 제안을 채운다.
@@ -112,6 +112,6 @@ python3 ${CLAUDE_PLUGIN_ROOT}/scripts/blame_author.py --file <경로> --lines <n
 
 - ✅ Stage0 수집, 방언 자동 감지(MySQL/MariaDB/PostgreSQL), `mybatis`/`native-sql`/`jpa`(추론) 추출, Tier1 휴리스틱 + Tier2 인덱스 대조, Tier3 실 DB EXPLAIN(`--db` opt-in), 증분/점진 + follow-up, 리포트 + 실행 계획.
 - 🔎 `jpa`/동적 쿼리는 추론(`INFERRED`/`AMBIGUOUS`)이며 `show_sql` 검증을 함께 안내(과신 금지).
-- 🟠 방언 심화는 MySQL/MariaDB/PostgreSQL 지원(Oracle은 스텁). Python(Django/SQLAlchemy) 어댑터는 확장으로 제공(주력 JVM 스택만큼 검증되지는 않음). Node 등 그 외 스택은 미구현 - `references/adapters/_template.md`로 확장.
+- 🟠 방언 심화는 MySQL/MariaDB/PostgreSQL 지원(Oracle은 스텁). Python(Django/SQLAlchemy) 어댑터는 확장으로 제공. Node 등 그 외 스택은 미구현 - `references/adapters/_template.md`로 확장.
 
 범위를 벗어난 요청은 **할 수 있는 만큼만 하고 한계를 분명히 밝힌다.** 없는 정확도를 지어내지 않는다.

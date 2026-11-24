@@ -10,7 +10,7 @@ The manual for **`inventory-report`**, one of query-inspector's two skills. It *
 
 ## 1. Overview
 
-`inventory-report` builds a **catalog of the queries a project runs** - both explicit SQL and the SQL that ORM / dynamic queries generate. It supports a broad range of stacks: Kotlin/Java + MyBatis / native SQL / JPA/Hibernate (derived methods, `@Query`, QueryDSL, Kotlin JDSL). **Python (Django / SQLAlchemy) is supported too, though not as thoroughly validated as the primary stacks.** Dialects are auto-detected. Its main output is the **full body of every query**, alongside where each comes from and whether an index covers it. As cataloging, it assigns no severity and suggests no fixes. The runtime scripts are all Python, so it works the same on **mac / Linux / Windows**.
+`inventory-report` builds a **catalog of the queries a project runs** - both explicit SQL and the SQL that ORM / dynamic queries generate. It supports a broad range of stacks: Kotlin/Java + MyBatis / native SQL / JPA/Hibernate (derived methods, `@Query`, QueryDSL, Kotlin JDSL). **Python (Django / SQLAlchemy) is supported too.** Dialects are auto-detected. Its main output is the **full body of every query**, alongside where each comes from and whether an index covers it. As cataloging, it assigns no severity and suggests no fixes. The runtime scripts are all Python, so it works the same on **mac / Linux / Windows**.
 
 ### Report contents
 - **Full query body (primary output)**: the inferred SQL body of every query, in full; dynamic queries get 2-3 representative scenarios, each in full.

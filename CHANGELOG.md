@@ -5,6 +5,11 @@
 
 > 플러그인 갱신(`claude plugin update`)은 버전 비교로 동작하므로, 스킬 내용을 바꿀 때는 `plugin.json`/`marketplace.json`의 버전을 함께 올립니다.
 
+## [1.2.4] - 2026-11-24
+
+### Changed
+- **Python 스택 지원 서술 정정 + 모호 동사 교정** - 문서/스킬 여러 곳에 남아 있던 "Python은 주력 스택만큼 검증되지 않음" 표현을 제거한다. Python(Django/SQLAlchemy)은 실무 오픈소스 프로젝트로 검증한 정식 지원 스택이며, 지원 목록에서 다른 스택과 동일하게 표기한다. 아울러 한국어 문서/스킬의 모호 동사를 협의 한자어로 교정한다(보다 -> 점검/분석, 잡다 -> 검출, 다루다 -> 설명).
+
 ## [1.2.3] - 2026-11-17
 
 ### Changed
@@ -98,7 +103,7 @@ JVM 주력 스택(Kotlin + JdbcTemplate 래퍼/QueryDSL/JPA) 실무 프로젝트
 - **`tuning-report`** - `git` 변경분(또는 프로젝트 전체)의 SQL/ORM 쿼리를 추출해 인덱스 누락/N+1/안티패턴을 진단하고, 수정 제안이 담긴 리포트를 생성. 증분 + 이전 제안 검증(follow-up).
 - **`inventory-report`** - 프로젝트 쿼리를 목적/대상 테이블/본문 전문/인덱스 커버로 목록화.
 - **3-Tier 자동 강등** - 정적 휴리스틱 -> 스키마 인덱스 대조(엔티티/마이그레이션/DDL 자동 감지 또는 `--db`) -> 실 DB `EXPLAIN`(opt-in, MySQL/MariaDB/PostgreSQL).
-- **스택/방언** - MyBatis, 네이티브 SQL, JPA/Hibernate(파생 메서드/`@Query`/QueryDSL/Kotlin JDSL 등 추론), 마이그레이션 어댑터. Python(Django/SQLAlchemy)은 주력 스택만큼 검증되지는 않음. 방언 자동 감지(MySQL/MariaDB, PostgreSQL; Oracle 스텁).
+- **스택/방언** - MyBatis, 네이티브 SQL, JPA/Hibernate(파생 메서드/`@Query`/QueryDSL/Kotlin JDSL 등 추론), 마이그레이션 어댑터. Python(Django/SQLAlchemy)은 확장으로 추가. 방언 자동 감지(MySQL/MariaDB, PostgreSQL; Oracle 스텁).
 - **과신 방지** - 모든 추출 쿼리에 신뢰도 라벨(`EXACT`/`INFERRED`/`AMBIGUOUS`), 동적 쿼리는 대표 시나리오로 전개하고 실 SQL 검증(`show_sql`) 안내.
 - **바로 쓰는 리포트** - 위험도순 요약 + 실행 계획(Action Items: `[자동적용]`/`[검토후]`/`[확인후]` + 복붙용 코드/DDL). 코드 자동 수정은 하지 않음. 최종 수정자(git blame) 표기.
 - **Tier 3 안전장치** - `--db` opt-in, 프로덕션 호스트(이름 패턴/공인 IP) 차단, `SELECT`/`EXPLAIN`만 허용(가드레일 코드로 강제), `EXPLAIN ANALYZE`는 트랜잭션 롤백. 접속 정보는 환경변수/`.env`로만 조달하고 리포트/로그에 미기록. 드라이버 우선 + CLI 폴백, 둘 다 없으면 Tier 2로 강등.

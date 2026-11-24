@@ -18,7 +18,7 @@ query-inspector의 두 스킬 중 하나인 **`inventory-report`** 매뉴얼입�
 
 `inventory-report`는 **프로젝트에 포함되어 실행되는 쿼리의 카탈로그**를 만듭니다.<br> 
 명시적 SQL과 ORM / 동적 쿼리가 생성하는 SQL 모두 대상이 됩니다.<br>
-Kotlin/Java + MyBatis / 네이티브 SQL / JPA/Hibernate(파생 메서드 / `@Query` / QueryDSL / Kotlin JDSL) 등 폭넓은 스택을 지원합니다. **Python(Django / SQLAlchemy)도 지원하지만 주력 스택만큼 검증되지는 않았습니다.** 방언은 자동 감지합니다.<br> 
+Kotlin/Java + MyBatis / 네이티브 SQL / JPA/Hibernate(파생 메서드 / `@Query` / QueryDSL / Kotlin JDSL) 등 폭넓은 스택을 지원합니다. **Python(Django / SQLAlchemy)도 지원합니다.** 방언은 자동 감지합니다.<br> 
 주된 산출물은 **모든 쿼리의 본문(전문)** 이며, 각 쿼리의 출처와 인덱스 커버 여부를 함께 리포팅합니다.<br> 
 목록화 스킬이므로 심각도를 매기지 않고 수정도 제안하지 않습니다.<br> 
 실행 스크립트가 모두 파이썬으로 작성되어 **mac / Linux / Windows 공통**으로 동작합니다.
